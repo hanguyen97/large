@@ -40,7 +40,8 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
                      double sigma2, int n, double s_22, 
                      const arma::colvec& y, const arma::mat& Z, 
                      int node, int outer_iter, 
-                     double alpha, double lambda0 = -1, 
+                     double alpha, const arma::vec& F_crit_values, 
+                     double lambda0 = -1, 
                      bool verbose = false) {
    
    int p = X_X.n_rows;
@@ -49,10 +50,6 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
    double e_old = 1e6;
    bool F_test = true;
    double thresh = -1;
-   
-   Rcpp::Function qf("qf");
-   arma::vec F_crit_values = arma::linspace<arma::vec>(1, p, p);  // Replace loop
-   F_crit_values.transform([&](double j) { return Rcpp::as<double>(qf(1 - alpha, 1, j)); });
    
    if (lambda0 == -1) {
      lambda0 = max(abs(X_Y)) * (1 / s_22);
@@ -153,6 +150,10 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
    int n = X.n_rows;
    int p = X.n_cols;
    
+   Rcpp::Function qf("qf");
+   arma::vec F_crit_values = arma::linspace<arma::vec>(1, p-1, p-1);  // Replace loop
+   F_crit_values.transform([&](double j) { return Rcpp::as<double>(qf(1 - alpha, 1, j)); });
+   
    arma::mat S = (X.t() * X) / n;  
    arma::vec sigma2_hat = S.diag();
    
@@ -185,7 +186,8 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
        List fitted = lasso_autotune(W_11, s_12, 
                                     sigma2_hat(j), n, s_22, 
                                     X.col(j), X.cols(idx), 
-                                    j, iter, alpha, lambdav(j));
+                                    j, iter, alpha, F_crit_values,
+                                    lambdav(j));
        
        b_hat = as<arma::vec>(fitted["b"]);
        sigma2_hat(j) = fitted["sigma2"];

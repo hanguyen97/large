@@ -7,8 +7,8 @@
 #' @param X_Y the (possibly transformed) response
 #' @param sigma2 a threshold of (absolute) correlation above which a pair is considered highly correlated
 #' @return a list containing  variables to ignore because they are highly correlated with other, and SLR coefficients
-lasso_autotune <- function(X_X, X_Y, sigma2, n, s_22, y, Z, node, outer_iter, alpha, lambda0 = -1, verbose = FALSE) {
-    .Call(`_ATTglasso_lasso_autotune`, X_X, X_Y, sigma2, n, s_22, y, Z, node, outer_iter, alpha, lambda0, verbose)
+lasso_autotune <- function(X_X, X_Y, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0 = -1, verbose = FALSE) {
+    .Call(`_ATTglasso_lasso_autotune`, X_X, X_Y, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0, verbose)
 }
 
 #' Graphical Lasso with Coordinate Descent and Autotuning
