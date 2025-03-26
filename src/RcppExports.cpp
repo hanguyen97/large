@@ -11,62 +11,19 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// rcpparma_hello_world
-arma::mat rcpparma_hello_world();
-RcppExport SEXP _ATTglasso_rcpparma_hello_world() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(rcpparma_hello_world());
-    return rcpp_result_gen;
-END_RCPP
-}
-// rcpparma_outerproduct
-arma::mat rcpparma_outerproduct(const arma::colvec& x);
-RcppExport SEXP _ATTglasso_rcpparma_outerproduct(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_outerproduct(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rcpparma_innerproduct
-double rcpparma_innerproduct(const arma::colvec& x);
-RcppExport SEXP _ATTglasso_rcpparma_innerproduct(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_innerproduct(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// rcpparma_bothproducts
-Rcpp::List rcpparma_bothproducts(const arma::colvec& x);
-RcppExport SEXP _ATTglasso_rcpparma_bothproducts(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(rcpparma_bothproducts(x));
-    return rcpp_result_gen;
-END_RCPP
-}
 // lasso_autotune
-List lasso_autotune(arma::mat X_X, arma::colvec X_Y, double sigma2, int n, double s_22, arma::colvec y, arma::mat Z, int node, int outer_iter, double alpha, double lambda0, bool verbose);
+List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, double sigma2, int n, double s_22, const arma::colvec& y, const arma::mat& Z, int node, int outer_iter, double alpha, double lambda0, bool verbose);
 RcppExport SEXP _ATTglasso_lasso_autotune(SEXP X_XSEXP, SEXP X_YSEXP, SEXP sigma2SEXP, SEXP nSEXP, SEXP s_22SEXP, SEXP ySEXP, SEXP ZSEXP, SEXP nodeSEXP, SEXP outer_iterSEXP, SEXP alphaSEXP, SEXP lambda0SEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type X_X(X_XSEXP);
-    Rcpp::traits::input_parameter< arma::colvec >::type X_Y(X_YSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type X_X(X_XSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec& >::type X_Y(X_YSEXP);
     Rcpp::traits::input_parameter< double >::type sigma2(sigma2SEXP);
     Rcpp::traits::input_parameter< int >::type n(nSEXP);
     Rcpp::traits::input_parameter< double >::type s_22(s_22SEXP);
-    Rcpp::traits::input_parameter< arma::colvec >::type y(ySEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type Z(ZSEXP);
+    Rcpp::traits::input_parameter< const arma::colvec& >::type y(ySEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type Z(ZSEXP);
     Rcpp::traits::input_parameter< int >::type node(nodeSEXP);
     Rcpp::traits::input_parameter< int >::type outer_iter(outer_iterSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
@@ -77,27 +34,24 @@ BEGIN_RCPP
 END_RCPP
 }
 // glasso_autotune
-List glasso_autotune(arma::mat X, double alpha, double thr, int maxit);
-RcppExport SEXP _ATTglasso_glasso_autotune(SEXP XSEXP, SEXP alphaSEXP, SEXP thrSEXP, SEXP maxitSEXP) {
+List glasso_autotune(const arma::mat& X, double alpha, double thr, int maxit, bool verbose);
+RcppExport SEXP _ATTglasso_glasso_autotune(SEXP XSEXP, SEXP alphaSEXP, SEXP thrSEXP, SEXP maxitSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< double >::type thr(thrSEXP);
     Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
-    rcpp_result_gen = Rcpp::wrap(glasso_autotune(X, alpha, thr, maxit));
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    rcpp_result_gen = Rcpp::wrap(glasso_autotune(X, alpha, thr, maxit, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ATTglasso_rcpparma_hello_world", (DL_FUNC) &_ATTglasso_rcpparma_hello_world, 0},
-    {"_ATTglasso_rcpparma_outerproduct", (DL_FUNC) &_ATTglasso_rcpparma_outerproduct, 1},
-    {"_ATTglasso_rcpparma_innerproduct", (DL_FUNC) &_ATTglasso_rcpparma_innerproduct, 1},
-    {"_ATTglasso_rcpparma_bothproducts", (DL_FUNC) &_ATTglasso_rcpparma_bothproducts, 1},
     {"_ATTglasso_lasso_autotune", (DL_FUNC) &_ATTglasso_lasso_autotune, 12},
-    {"_ATTglasso_glasso_autotune", (DL_FUNC) &_ATTglasso_glasso_autotune, 4},
+    {"_ATTglasso_glasso_autotune", (DL_FUNC) &_ATTglasso_glasso_autotune, 5},
     {NULL, NULL, 0}
 };
 

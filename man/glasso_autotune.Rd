@@ -4,7 +4,7 @@
 \alias{glasso_autotune}
 \title{Graphical Lasso with Coordinate Descent and Autotuning}
 \usage{
-glasso_autotune(X, alpha = 0.1, thr = 1e-04, maxit = 10000L)
+glasso_autotune(X, alpha = 0.1, thr = 1e-04, maxit = 10000L, verbose = TRUE)
 }
 \arguments{
 \item{X}{matrix of putative variables}
