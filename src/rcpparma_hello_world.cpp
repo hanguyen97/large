@@ -55,6 +55,23 @@ Rcpp::List rcpparma_bothproducts(const arma::colvec & x) {
                             Rcpp::Named("inner")=ip);
 }
 
+// Function to compute LS estimator of sigma^2
+double get_LSsigma2(arma::colvec y, arma::mat X) {
+  int n = X.n_rows; 
+  int p = X.n_cols; 
+  
+  arma::mat XtX_inv = inv(X.t() * X);
+  arma::mat H = X * XtX_inv * X.t();
+  
+  arma::mat I = eye(n, n);
+  arma::mat M = I - H;
+  
+  double sigma2_hat = as_scalar(y.t() * M * y) / (n - p);
+  
+  return sigma2_hat;
+}
+
+
 //' Get an initial set of putative variables for the GAM algorithm
 //'
 //' @param X_X matrix of putative variables
@@ -106,17 +123,49 @@ List lasso_autotune(arma::mat X_X, arma::colvec X_Y,
         sd_r[j] = stddev(y - Z.cols(find(linspace<uvec>(0, p - 1, p) != j)) * b(find(linspace<uvec>(0, p - 1, p) != j)));
       }
       
-      uvec sorted_sd_idx = sort_index(sd_r, "descend");
+      arma::uvec sorted_sd_idx = sort_index(sd_r, "descend");
+      Rcout << "sorted_sd_idx" << sorted_sd_idx << std::endl;
+      
       std::vector<int> support_set;
       if (F_test) {
         std::vector<int> sel_b;
+        double sel_sigma2 = var(y);
+        std::vector<int> new_b = sel_b;
         
-        for (uword j : sorted_sd_idx) {
-          std::vector<int> new_b = sel_b;
-          new_b.push_back(j);
-          // TO ADD
+        for (size_t j = 0; j < sorted_sd_idx.size(); j++) {
+          int j_idx = sorted_sd_idx[j];
+          new_b.push_back(j_idx);
+          double new_sigma2 = get_LSsigma2(y, Z.cols(sorted_sd_idx.subvec(0, j)));
+          double F_stat = (sel_sigma2 - new_sigma2) / (new_sigma2 / (j+1));
+            
+          Rcout << "new_sigma2" << new_sigma2 << std::endl;
+          
+          Rcpp::Function qf("qf");
+          double F_crit = Rcpp::as<double>(qf(1-alpha, 1, j+1));
+            
+          if (F_stat < F_crit) {
+            Rcout << "F continue" << std::endl;
+            sel_b = new_b;
+            sel_sigma2 = new_sigma2;
+          } else {
+            Rcout << "F ends" << std::endl;
+            break;
+          }
+          
+          if (support_set == sel_b) {
+            F_test = false;
+          } else if (j > 1) {
+            double e1 = sum(abs(b(sorted_sd_idx.subvec(0, j)))); 
+            double e2 = sum(abs(b_old(sorted_sd_idx.subvec(0, j-1))));
+            if (abs(e1 - e2) < 0.0001) {
+              F_test = false;
+            } else {
+              support_set = sel_b;
+            }
+          } else {
+            support_set = sel_b;
+          }
         }
-        // TO ADD
       }
       
       b_old = b;
