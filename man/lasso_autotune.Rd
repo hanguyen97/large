@@ -14,9 +14,9 @@ lasso_autotune(
   Z,
   node,
   outer_iter,
-  verbose,
+  alpha,
   lambda0 = -1,
-  alpha = 0.1
+  verbose = FALSE
 )
 }
 \arguments{

@@ -23,7 +23,17 @@ rcpparma_bothproducts <- function(x) {
 #' @param X_Y the (possibly transformed) response
 #' @param sigma2 a threshold of (absolute) correlation above which a pair is considered highly correlated
 #' @return a list containing  variables to ignore because they are highly correlated with other, and SLR coefficients
-lasso_autotune <- function(X_X, X_Y, sigma2, n, s_22, y, Z, node, outer_iter, verbose, lambda0 = -1, alpha = 0.1) {
-    .Call(`_ATTglasso_lasso_autotune`, X_X, X_Y, sigma2, n, s_22, y, Z, node, outer_iter, verbose, lambda0, alpha)
+lasso_autotune <- function(X_X, X_Y, sigma2, n, s_22, y, Z, node, outer_iter, alpha, lambda0 = -1, verbose = FALSE) {
+    .Call(`_ATTglasso_lasso_autotune`, X_X, X_Y, sigma2, n, s_22, y, Z, node, outer_iter, alpha, lambda0, verbose)
+}
+
+#' Graphical Lasso with Coordinate Descent and Autotuning
+#'
+#' @param X matrix of putative variables
+#' @param alpha the (possibly transformed) response
+#' @param maxit a threshold of (absolute) correlation above which a pair is considered highly correlated
+#' @return a list containing  variables to ignore because they are highly correlated with other, and SLR coefficients
+glasso_autotune <- function(X, alpha = 0.1, thr = 1e-4, maxit = 1e4L) {
+    .Call(`_ATTglasso_glasso_autotune`, X, alpha, thr, maxit)
 }
 
