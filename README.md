@@ -3,11 +3,12 @@ ATTglasso
 
 ## Overview
 
-`CVglasso` is an R package that performs autotune Graphical LASSO. \##
-Installation
+`ATTglasso` is an R package that performs Autotune Graphical LASSO.
+
+## Installation
 
 ``` r
-# You can also install the development version from GitHub:
+# You can install the development version from GitHub:
 # install.packages("devtools")
 devtools::install_github("hanguyen97/ATTglasso")
 ```
@@ -18,7 +19,7 @@ devtools::install_github("hanguyen97/ATTglasso")
 library(ATTglasso)
 set.seed(1)
 
-# generate data set.seed(1)
+# Generate data from AR(1) model
 p <- 10
 n <- 200
 
@@ -52,7 +53,7 @@ out.att.glassoC <- glasso_autotune(X=X, alpha=0.1, thr=1e-4)
     ## change in W.err = 1.13034e-05
     ## glasso iter = 5; error = 0
     ## change in W.err = 1.13033e-05
-    ## final glasso iter = 4
+    ## final glasso iter = 5
 
 ``` r
 Theta.hat.att.glassoC <- out.att.glassoC$Theta

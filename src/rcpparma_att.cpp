@@ -222,10 +222,12 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
        Rcout << "change in W.err = " << std::abs(e - e_old) << std::endl;
      }
      
-     if (final_cycle) break;
+     if (final_cycle) { 
+       niter = iter + 1;
+       break;
+     }
      if (std::abs(e - e_old) < thr) {
        final_cycle = true;
-       niter = iter+1;
      } else {
        W_old = W;
        e_old = e;

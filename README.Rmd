@@ -11,11 +11,12 @@ library(MASS)
 
 ## Overview
 
-`CVglasso` is an R package that performs autotune Graphical LASSO.
+`ATTglasso` is an R package that performs Autotune Graphical LASSO.
+
 ## Installation
 
 ```{r, eval = FALSE}
-# You can also install the development version from GitHub:
+# You can install the development version from GitHub:
 # install.packages("devtools")
 devtools::install_github("hanguyen97/ATTglasso")
 ```
@@ -26,7 +27,7 @@ devtools::install_github("hanguyen97/ATTglasso")
 library(ATTglasso)
 set.seed(1)
 
-# generate data set.seed(1)
+# Generate data from AR(1) model
 p <- 10
 n <- 200
 
