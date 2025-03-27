@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // lasso_autotune
-List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, double sigma2, int n, double s_22, const arma::colvec& y, const arma::mat& Z, int node, int outer_iter, double alpha, const arma::vec& F_crit_values, double lambda0, bool verbose);
-RcppExport SEXP _ATTglasso_lasso_autotune(SEXP X_XSEXP, SEXP X_YSEXP, SEXP sigma2SEXP, SEXP nSEXP, SEXP s_22SEXP, SEXP ySEXP, SEXP ZSEXP, SEXP nodeSEXP, SEXP outer_iterSEXP, SEXP alphaSEXP, SEXP F_crit_valuesSEXP, SEXP lambda0SEXP, SEXP verboseSEXP) {
+List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, double sigma2, int n, double s_22, const arma::colvec& y, const arma::mat& Z, int node, int outer_iter, double alpha, const arma::vec& F_crit_values, double lambda0, bool verbose_i);
+RcppExport SEXP _ATTglasso_lasso_autotune(SEXP X_XSEXP, SEXP X_YSEXP, SEXP sigma2SEXP, SEXP nSEXP, SEXP s_22SEXP, SEXP ySEXP, SEXP ZSEXP, SEXP nodeSEXP, SEXP outer_iterSEXP, SEXP alphaSEXP, SEXP F_crit_valuesSEXP, SEXP lambda0SEXP, SEXP verbose_iSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -29,8 +29,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type F_crit_values(F_crit_valuesSEXP);
     Rcpp::traits::input_parameter< double >::type lambda0(lambda0SEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(lasso_autotune(X_X, X_Y, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0, verbose));
+    Rcpp::traits::input_parameter< bool >::type verbose_i(verbose_iSEXP);
+    rcpp_result_gen = Rcpp::wrap(lasso_autotune(X_X, X_Y, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0, verbose_i));
     return rcpp_result_gen;
 END_RCPP
 }

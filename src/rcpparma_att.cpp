@@ -40,6 +40,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
                      bool verbose_i = false) {
    
    int p = X_X.n_rows;
+   int d = std::min(n-2, p);
    arma::colvec X_r_old = X_Y;
    arma::vec b_old = arma::zeros<arma::colvec>(p);
    double e_old = 1e6;
@@ -85,7 +86,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
          std::vector<int> new_b = sel_b;
          
          // Sequential F test for variable selection
-         for (size_t j = 0; j < sorted_sd_idx.size(); j++) {
+         for (size_t j = 0; j < d; j++) {
            int j_idx = sorted_sd_idx[j];
            new_b.push_back(j_idx);
            double new_sigma2 = get_LSsigma2(y, Z.cols(sorted_sd_idx.subvec(0, j)));
@@ -158,7 +159,9 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
    int p = X.n_cols;
    
    Rcpp::Function qf("qf");
-   arma::vec F_crit_values = arma::linspace<arma::vec>(1, p-1, p-1);  // Replace loop
+   // Prevent non-positive df2 of F-test
+   int d = std::min(n-2, p-1);
+   arma::vec F_crit_values = arma::linspace<arma::vec>(1, d, d);  
    F_crit_values.transform([&](double j) { 
      return Rcpp::as<double>(qf(1 - alpha, 1, n-(j+1)));
      });

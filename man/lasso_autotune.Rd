@@ -17,7 +17,7 @@ lasso_autotune(
   alpha,
   F_crit_values,
   lambda0 = -1,
-  verbose = FALSE
+  verbose_i = FALSE
 )
 }
 \description{
