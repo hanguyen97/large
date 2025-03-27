@@ -41,7 +41,8 @@ X <- mvrnorm(n=n, mu=rep(0,p), Sigma=Sigma)
 
 # Run autotune GLASSO
 library(ATTglasso)
-out.att.glassoC <- glasso_autotune(X=X, alpha=0.1, thr=1e-4)
+start.T <- Sys.time()
+out.att.glasso <- glasso_autotune(X=X, alpha=0.1, thr=1e-4)
 ```
 
     ## glasso iter = 1; error = 1e+06
@@ -59,9 +60,13 @@ out.att.glassoC <- glasso_autotune(X=X, alpha=0.1, thr=1e-4)
     ## final glasso iter = 6
 
 ``` r
-Theta.hat.att.glassoC <- out.att.glassoC$Theta
+(Sys.time()-start.T )
+```
 
-round(Theta.hat.att.glassoC,4)
+    ## Time difference of 0.01887202 secs
+
+``` r
+round(out.att.glasso$Theta,4)
 ```
 
     ##         [,1]   [,2]   [,3]   [,4]   [,5]   [,6]   [,7]   [,8]   [,9]  [,10]
