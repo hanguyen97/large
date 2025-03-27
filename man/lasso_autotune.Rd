@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{lasso_autotune}
 \alias{lasso_autotune}
-\title{Get an initial set of putative variables for the GAM algorithm}
+\title{Inner Loop using Autotune Lasso}
 \usage{
 lasso_autotune(
   X_X,
@@ -20,16 +20,6 @@ lasso_autotune(
   verbose = FALSE
 )
 }
-\arguments{
-\item{X_X}{matrix of putative variables}
-
-\item{X_Y}{the (possibly transformed) response}
-
-\item{sigma2}{a threshold of (absolute) correlation above which a pair is considered highly correlated}
-}
-\value{
-a list containing  variables to ignore because they are highly correlated with other, and SLR coefficients
-}
 \description{
-Get an initial set of putative variables for the GAM algorithm
+Inner Loop using Autotune Lasso
 }

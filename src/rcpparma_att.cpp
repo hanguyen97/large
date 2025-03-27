@@ -29,12 +29,7 @@ double get_LSsigma2(const arma::colvec& y, const arma::mat& X) {
 }
 
 
-//' Get an initial set of putative variables for the GAM algorithm
-//'
-//' @param X_X matrix of putative variables
-//' @param X_Y the (possibly transformed) response
-//' @param sigma2 a threshold of (absolute) correlation above which a pair is considered highly correlated
-//' @return a list containing  variables to ignore because they are highly correlated with other, and SLR coefficients
+//' Inner Loop using Autotune Lasso  
 // [[Rcpp::export]]
 List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, 
                      double sigma2, int n, double s_22, 
@@ -42,7 +37,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
                      int node, int outer_iter, 
                      double alpha, const arma::vec& F_crit_values, 
                      double lambda0 = -1, 
-                     bool verbose = false) {
+                     bool verbose_i = false) {
    
    int p = X_X.n_rows;
    arma::colvec X_r_old = X_Y;
@@ -57,8 +52,8 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
    
    for (int iter = 0; iter <= 1000; iter++) {
      
-     if (verbose) {
-       Rcout << "inner iter " << iter << std::endl;
+     if (verbose_i) {
+       Rcout << "node " << node << " inner iter " << iter << " sigma2 " << sigma2 << std::endl;
      }
      
      if (e_old > 0.0001) {
@@ -82,37 +77,48 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
        }
        
        arma::uvec sorted_sd_idx = sort_index(sd_r, "descend");
-
+       
        std::vector<int> support_set;
        if (F_test) {
          std::vector<int> sel_b;
          double sel_sigma2 = var(y);
          std::vector<int> new_b = sel_b;
          
+         // Sequential F test for variable selection
          for (size_t j = 0; j < sorted_sd_idx.size(); j++) {
            int j_idx = sorted_sd_idx[j];
            new_b.push_back(j_idx);
            double new_sigma2 = get_LSsigma2(y, Z.cols(sorted_sd_idx.subvec(0, j)));
-           sigma2 = sel_sigma2;
-           double F_stat = (sel_sigma2 - new_sigma2) / (new_sigma2 / (j+1));
+           double F_stat = (sel_sigma2 - new_sigma2) / (new_sigma2 / (n-(j+1)));
            
            if (F_stat > F_crit_values[j]) {
              sel_b = new_b;
              sel_sigma2 = new_sigma2;
            } else {
+             if (verbose_i) {
+               Rcout << "sel_b.size " << sel_b.size() << std::endl;
+             }
              break;
            }
-           
-           if (support_set == sel_b) {
+         }
+         
+         // Set sigma2 to sigma2 ols 
+         sigma2 = sel_sigma2;
+         
+         // Check if support set converges
+         if (support_set == sel_b) {
+           F_test = false;
+         } else {
+           double e1 = 0.0;
+           double e2 = 0.0;
+           if (sel_b.size() > 0) {
+             e1 = sum(abs(b(sorted_sd_idx.subvec(0, sel_b.size()-1)))); 
+           }
+           if (support_set.size() > 0) {
+             e2 = sum(abs(b_old(sorted_sd_idx.subvec(0, support_set.size()-1))));
+           }
+           if (abs(e1 - e2) < 0.0001) {
              F_test = false;
-           } else if (j > 1) {
-             double e1 = sum(abs(b(sorted_sd_idx.subvec(0, j)))); 
-             double e2 = sum(abs(b_old(sorted_sd_idx.subvec(0, j-1))));
-             if (abs(e1 - e2) < 0.0001) {
-               F_test = false;
-             } else {
-               support_set = sel_b;
-             }
            } else {
              support_set = sel_b;
            }
@@ -137,12 +143,13 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
  }
 
 
-//' Graphical Lasso with Coordinate Descent and Autotuning
+//' Autotune Graphical Lasso 
 //'
-//' @param X matrix of putative variables
-//' @param alpha the (possibly transformed) response
-//' @param maxit a threshold of (absolute) correlation above which a pair is considered highly correlated
-//' @return a list containing  variables to ignore because they are highly correlated with other, and SLR coefficients
+//' @param X Data matrix 
+//' @param alpha alpha value of F test
+//' @param thr Threshold for convergence. Default value is 1e-4.
+//' @param maxit Maximum number of iterations of outer loop. Default 10,000
+//' @return Estimated precision matrix
 // [[Rcpp::export]]
 List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4, 
                       int maxit = 1e4, bool verbose = true) {
@@ -152,7 +159,9 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
    
    Rcpp::Function qf("qf");
    arma::vec F_crit_values = arma::linspace<arma::vec>(1, p-1, p-1);  // Replace loop
-   F_crit_values.transform([&](double j) { return Rcpp::as<double>(qf(1 - alpha, 1, j)); });
+   F_crit_values.transform([&](double j) { 
+     return Rcpp::as<double>(qf(1 - alpha, 1, n-(j+1)));
+     });
    
    arma::mat S = (X.t() * X) / n;  
    arma::vec sigma2_hat = S.diag();
@@ -171,9 +180,9 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
    lambdav.fill(-1);
    arma::vec b_hat(p-1, fill::zeros);
    
-   for (int iter = 1; iter <= maxit; iter++) {
+   for (int iter = 0; iter < maxit; iter++) {
      if (verbose) {
-       Rcout << "glasso iter = " << iter << "; error = " << round(e_old * 1000) / 1000 << std::endl;
+       Rcout << "glasso iter = " << iter+1 << "; error = " << round(e_old * 1000) / 1000 << std::endl;
      }
      
      for (int j = 0; j < p; j++) {
@@ -205,7 +214,7 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
          Theta.submat(idx, uvec{(unsigned int)j}) = Thetasub;
          Theta.submat(uvec{(unsigned int)j}, idx) = trans(Thetasub);
        }
-
+       
      }
      
      e = norm(W - W_old, "fro");
@@ -230,6 +239,7 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
      Rcout << "final glasso iter = " << niter << std::endl;
    }
    return List::create(Named("Theta") = Theta, 
+                       Named("sigma2.hat") = sigma2_hat,
                        Named("niter") = niter,
                        Named("converged") = converged);
  }

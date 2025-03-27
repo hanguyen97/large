@@ -2,20 +2,22 @@
 % Please edit documentation in R/RcppExports.R
 \name{glasso_autotune}
 \alias{glasso_autotune}
-\title{Graphical Lasso with Coordinate Descent and Autotuning}
+\title{Autotune Graphical Lasso}
 \usage{
 glasso_autotune(X, alpha = 0.1, thr = 1e-04, maxit = 10000L, verbose = TRUE)
 }
 \arguments{
-\item{X}{matrix of putative variables}
+\item{X}{Data matrix}
 
-\item{alpha}{the (possibly transformed) response}
+\item{alpha}{alpha value of F test}
 
-\item{maxit}{a threshold of (absolute) correlation above which a pair is considered highly correlated}
+\item{thr}{Threshold for convergence. Default value is 1e-4.}
+
+\item{maxit}{Maximum number of iterations of outer loop. Default 10,000}
 }
 \value{
-a list containing  variables to ignore because they are highly correlated with other, and SLR coefficients
+Estimated precision matrix
 }
 \description{
-Graphical Lasso with Coordinate Descent and Autotuning
+Autotune Graphical Lasso
 }
