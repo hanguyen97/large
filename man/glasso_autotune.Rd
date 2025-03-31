@@ -4,7 +4,14 @@
 \alias{glasso_autotune}
 \title{Autotune Graphical Lasso}
 \usage{
-glasso_autotune(X, alpha = 0.1, thr = 1e-04, maxit = 10000L, verbose = TRUE)
+glasso_autotune(
+  X,
+  alpha = 0.1,
+  thr = 1e-04,
+  maxit = 10000L,
+  verbose = TRUE,
+  verbose_i = FALSE
+)
 }
 \arguments{
 \item{X}{Data matrix}

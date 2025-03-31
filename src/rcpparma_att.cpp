@@ -54,7 +54,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
    for (int iter = 0; iter <= 1000; iter++) {
      
      if (verbose_i) {
-       Rcout << "node " << node << " inner iter " << iter << " sigma2 " << sigma2 << std::endl;
+       Rcout << "node " << node+1 << " inner iter " << iter+1 << " sigma2 " << sigma2 << std::endl;
      }
      
      if (e_old > 0.0001) {
@@ -96,9 +96,9 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
              sel_b = new_b;
              sel_sigma2 = new_sigma2;
            } else {
-             if (verbose_i) {
-               Rcout << "sel_b.size " << sel_b.size() << std::endl;
-             }
+             // if (verbose_i) {
+             //   Rcout << "sel_b.size " << sel_b.size() << std::endl;
+             // }
              break;
            }
          }
@@ -153,7 +153,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
 //' @return Estimated precision matrix
 // [[Rcpp::export]]
 List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4, 
-                      int maxit = 1e4, bool verbose = true) {
+                      int maxit = 1e4, bool verbose = true, bool verbose_i = false) {
    
    int n = X.n_rows;
    int p = X.n_cols;
@@ -199,7 +199,7 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
                                     sigma2_hat(j), n, s_22, 
                                     X.col(j), X.cols(idx), 
                                     j, iter, alpha, F_crit_values,
-                                    lambdav(j));
+                                    lambdav(j), verbose_i);
        
        b_hat = as<arma::vec>(fitted["b"]);
        sigma2_hat(j) = fitted["sigma2"];

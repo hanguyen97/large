@@ -13,7 +13,7 @@ lasso_autotune <- function(X_X, X_Y, sigma2, n, s_22, y, Z, node, outer_iter, al
 #' @param thr Threshold for convergence. Default value is 1e-4.
 #' @param maxit Maximum number of iterations of outer loop. Default 10,000
 #' @return Estimated precision matrix
-glasso_autotune <- function(X, alpha = 0.1, thr = 1e-4, maxit = 1e4L, verbose = TRUE) {
-    .Call(`_ATTglasso_glasso_autotune`, X, alpha, thr, maxit, verbose)
+glasso_autotune <- function(X, alpha = 0.1, thr = 1e-4, maxit = 1e4L, verbose = TRUE, verbose_i = FALSE) {
+    .Call(`_ATTglasso_glasso_autotune`, X, alpha, thr, maxit, verbose, verbose_i)
 }
 

@@ -35,8 +35,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // glasso_autotune
-List glasso_autotune(const arma::mat& X, double alpha, double thr, int maxit, bool verbose);
-RcppExport SEXP _ATTglasso_glasso_autotune(SEXP XSEXP, SEXP alphaSEXP, SEXP thrSEXP, SEXP maxitSEXP, SEXP verboseSEXP) {
+List glasso_autotune(const arma::mat& X, double alpha, double thr, int maxit, bool verbose, bool verbose_i);
+RcppExport SEXP _ATTglasso_glasso_autotune(SEXP XSEXP, SEXP alphaSEXP, SEXP thrSEXP, SEXP maxitSEXP, SEXP verboseSEXP, SEXP verbose_iSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -45,14 +45,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type thr(thrSEXP);
     Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    rcpp_result_gen = Rcpp::wrap(glasso_autotune(X, alpha, thr, maxit, verbose));
+    Rcpp::traits::input_parameter< bool >::type verbose_i(verbose_iSEXP);
+    rcpp_result_gen = Rcpp::wrap(glasso_autotune(X, alpha, thr, maxit, verbose, verbose_i));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_ATTglasso_lasso_autotune", (DL_FUNC) &_ATTglasso_lasso_autotune, 13},
-    {"_ATTglasso_glasso_autotune", (DL_FUNC) &_ATTglasso_glasso_autotune, 5},
+    {"_ATTglasso_glasso_autotune", (DL_FUNC) &_ATTglasso_glasso_autotune, 6},
     {NULL, NULL, 0}
 };
 
