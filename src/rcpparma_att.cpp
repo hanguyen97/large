@@ -42,6 +42,9 @@ void updateSupport(std::vector<int>& support_ss, const std::vector<int>& sel_b) 
   }
 }
 
+bool haveSameElements(std::vector<int> sel_b, std::vector<int> support_ss) {
+  return std::multiset<int>(sel_b.begin(), sel_b.end()) == std::multiset<int>(support_ss.begin(), support_ss.end());
+}
 
 // Function to compute LS estimator of sigma^2
 double get_LSsigma2(const arma::colvec& y, const arma::mat& X) {
@@ -79,11 +82,6 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
    double thresh = -1;
    std::vector<int> support_ss;
    std::vector<int> sel_b;
-   
-   if (p > 50 and verbose_i==true) {
-     Rcout << "turn off inner loop log since p > 50" << std::endl;
-     verbose_i = false;
-   }
    
    if (lambda0 == -1) {
      lambda0 = max(abs(X_Y)) * (1 / s_22);
@@ -153,23 +151,37 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
          }
          
          // Check if support supper set converges
-         std::vector<int> support_tmp;
-         if (iter == 0) {
-           support_tmp = {-99};
-         } else {
-           support_tmp = support_ss;
-         }
-         updateSupport(support_ss, sel_b);
-         if (support_ss == support_tmp) {
-           F_test = false;
-           if (verbose_i) {
-             Rcout << "support super set converges: ";
-             for (int i = 0; i < support_ss.size(); i++) {
-               Rcpp::Rcout << support_ss[i] + 1 << " ";
+         if (iter > 0) {
+           if (haveSameElements(support_ss, sel_b)) {
+             F_test = false;
+             if (verbose_i) {
+               Rcout << "support super set converges: ";
+               for (int i = 0; i < support_ss.size(); i++) {
+                 Rcpp::Rcout << support_ss[i] + 1 << " ";
+               }
+               Rcpp::Rcout << std::endl; 
              }
-             Rcpp::Rcout << std::endl; 
+           } else {
+             updateSupport(support_ss, sel_b);
            }
-         } 
+         }
+         // std::vector<int> support_tmp;
+         // if (iter == 0) {
+         //   support_tmp = {-99};
+         // } else {
+         //   support_tmp = support_ss;
+         // }
+         // updateSupport(support_ss, sel_b);
+         // if (support_ss == support_tmp) {
+         //   F_test = false;
+         //   if (verbose_i) {
+         //     Rcout << "support super set converges: ";
+         //     for (int i = 0; i < support_ss.size(); i++) {
+         //       Rcpp::Rcout << support_ss[i] + 1 << " ";
+         //     }
+         //     Rcpp::Rcout << std::endl; 
+         //   }
+         // } 
          // else {
          //   double e1 = 0.0;
          //   double e2 = 0.0;
@@ -225,6 +237,11 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
    
    int n = X.n_rows;
    int p = X.n_cols;
+   
+   // if (p > 50 and verbose_i==true) {
+   //   Rcout << "turn off inner loop log since p > 50" << std::endl;
+   //   verbose_i = false;
+   // }
    
    Rcpp::Function qf("qf");
    // Prevent non-positive df2 of F-test
@@ -294,7 +311,9 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
      }
      
      if (final_cycle) { 
-       niter = iter + 1;
+       if (iter < maxit-1) {
+         niter = iter + 1;
+       }
        break;
      }
      if (std::abs(e - e_old) < thr) {
@@ -302,6 +321,9 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
      } else {
        W_old = W;
        e_old = e;
+     }
+     if (iter == maxit-2) {
+       final_cycle = true;
      }
    }
    
