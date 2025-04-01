@@ -87,6 +87,9 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
          
          // Sequential F test for variable selection
          for (size_t j = 0; j < d; j++) {
+           // Set sigma2 to sigma2 ols 
+           sigma2 = sel_sigma2;
+           
            int j_idx = sorted_sd_idx[j];
            new_b.push_back(j_idx);
            double new_sigma2 = get_LSsigma2(y, Z.cols(sorted_sd_idx.subvec(0, j)));
@@ -102,9 +105,6 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
              break;
            }
          }
-         
-         // Set sigma2 to sigma2 ols 
-         sigma2 = sel_sigma2;
          
          // Check if support set converges
          if (support_set == sel_b) {
