@@ -12,6 +12,37 @@ using namespace arma;
 //
 // [[Rcpp::depends(RcppArmadillo)]]
 
+// Function to update support_ss if necessary
+void updateSupport(std::vector<int>& support_ss, const std::vector<int>& sel_b) {
+  // Create an unordered set from support_ss for O(1) lookups
+  std::unordered_set<int> support_set(support_ss.begin(), support_ss.end());
+  
+  // Flag to check if all elements are found
+  bool all_found = true;
+  
+  // Check if all elements in sel_b are in support_ss
+  for (int num : sel_b) {
+    if (support_set.find(num) == support_set.end()) { // Element not found
+      all_found = false;
+      break; // Exit early if at least one element is missing
+    }
+  }
+  
+  // If all elements are already present, return early
+  if (all_found) {
+    return;
+  }
+  
+  // Otherwise, add missing elements to support_ss
+  for (int num : sel_b) {
+    if (support_set.find(num) == support_set.end()) {
+      support_ss.push_back(num);
+      support_set.insert(num);
+    }
+  }
+}
+
+
 // Function to compute LS estimator of sigma^2
 double get_LSsigma2(const arma::colvec& y, const arma::mat& X) {
   int n = X.n_rows; 
@@ -46,6 +77,13 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
    double e_old = 1e6;
    bool F_test = true;
    double thresh = -1;
+   std::vector<int> support_ss;
+   std::vector<int> sel_b;
+   
+   if (p > 50 and verbose_i==true) {
+     Rcout << "turn off inner loop log since p > 50" << std::endl;
+     verbose_i = false;
+   }
    
    if (lambda0 == -1) {
      lambda0 = max(abs(X_Y)) * (1 / s_22);
@@ -55,6 +93,11 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
      
      if (verbose_i) {
        Rcout << "node " << node+1 << " inner iter " << iter+1 << " sigma2 " << sigma2 << std::endl;
+       // Rcpp::Rcout << "Selected node " << sel_b.size() << " ";
+       // for (int i = 0; i < sel_b.size(); i++) {
+       //   Rcpp::Rcout << sel_b[i]+1 << " ";
+       // }
+       // Rcpp::Rcout << std::endl; 
      }
      
      if (e_old > 0.0001) {
@@ -79,7 +122,6 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
        
        arma::uvec sorted_sd_idx = sort_index(sd_r, "descend");
        
-       std::vector<int> support_set;
        if (F_test) {
          std::vector<int> sel_b;
          double sel_sigma2 = var(y);
@@ -99,31 +141,57 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
              sel_b = new_b;
              sel_sigma2 = new_sigma2;
            } else {
-             // if (verbose_i) {
-             //   Rcout << "sel_b.size " << sel_b.size() << std::endl;
-             // }
+             if (verbose_i) {
+               Rcout << "selected b: ";
+               for (int i = 0; i < sel_b.size(); i++) {
+                 Rcpp::Rcout << sel_b[i] + 1 << " ";
+               }
+               Rcpp::Rcout << std::endl; 
+             }
              break;
            }
          }
          
-         // Check if support set converges
-         if (support_set == sel_b) {
-           F_test = false;
+         // Check if support supper set converges
+         std::vector<int> support_tmp;
+         if (iter == 0) {
+           support_tmp = {-99};
          } else {
-           double e1 = 0.0;
-           double e2 = 0.0;
-           if (sel_b.size() > 0) {
-             e1 = sum(abs(b(sorted_sd_idx.subvec(0, sel_b.size()-1)))); 
-           }
-           if (support_set.size() > 0) {
-             e2 = sum(abs(b_old(sorted_sd_idx.subvec(0, support_set.size()-1))));
-           }
-           if (abs(e1 - e2) < 0.0001) {
-             F_test = false;
-           } else {
-             support_set = sel_b;
-           }
+           support_tmp = support_ss;
          }
+         updateSupport(support_ss, sel_b);
+         if (support_ss == support_tmp) {
+           F_test = false;
+           if (verbose_i) {
+             Rcout << "support super set converges: ";
+             for (int i = 0; i < support_ss.size(); i++) {
+               Rcpp::Rcout << support_ss[i] + 1 << " ";
+             }
+             Rcpp::Rcout << std::endl; 
+           }
+         } 
+         // else {
+         //   double e1 = 0.0;
+         //   double e2 = 0.0;
+         //   if (sel_b.size() > 0) {
+         //     e1 = sum(abs(b(sorted_sd_idx.subvec(0, sel_b.size()-1)))); 
+         //   }
+         //   if (support_set.size() > 0) {
+         //     e2 = sum(abs(b_old(sorted_sd_idx.subvec(0, support_set.size()-1))));
+         //   }
+         //   if (abs(e1 - e2) < 0.0001) {
+         //     if (verbose_i) {
+         //       Rcout << "support set converges v2: ";
+         //       for (int i = 0; i < support_set.size(); i++) {
+         //         Rcpp::Rcout << support_set[i] + 1 << " ";
+         //       }
+         //       Rcpp::Rcout << std::endl; 
+         //     }
+         //     F_test = false;
+         //   } else {
+         //     support_set = sel_b;
+         //   }
+         // }
        }
        
        b_old = b;
