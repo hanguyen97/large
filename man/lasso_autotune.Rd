@@ -7,6 +7,7 @@
 lasso_autotune(
   X_X,
   X_Y,
+  r_XY,
   sigma2,
   n,
   s_22,

@@ -65,7 +65,7 @@ double get_LSsigma2(const arma::colvec& y, const arma::mat& X) {
 
 //' Inner Loop using Autotune Lasso  
 // [[Rcpp::export]]
-List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, 
+List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::colvec& r_XY, 
                      double sigma2, int n, double s_22, 
                      const arma::colvec& y, const arma::mat& Z, 
                      int node, int outer_iter, 
@@ -115,10 +115,25 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
          }
          
          X_r -= X_X.col(j) * b[j];
-         sd_r[j] = stddev(y - Z.cols(find(linspace<uvec>(0, p - 1, p) != j)) * b(find(linspace<uvec>(0, p - 1, p) != j)));
+         arma::colvec pr = y - Z.cols(find(linspace<uvec>(0, p - 1, p) != j)) * b(find(linspace<uvec>(0, p - 1, p) != j));
+         sd_r[j] = sqrt(as_scalar(pr.t() * pr) / n);
        }
        
-       arma::uvec sorted_sd_idx = sort_index(sd_r, "descend");
+       arma::uvec sorted_sd_idx;
+       if (iter == 0) {
+         sorted_sd_idx = sort_index(abs(r_XY), "descend");
+       } else {
+         sorted_sd_idx = sort_index(sd_r, "descend");
+       }
+       
+       if (verbose_i) {
+         Rcout << "sorted_sd_idx with sd_val: ";
+         for (int i = 0; i < 5; i++) {
+           Rcpp::Rcout << sorted_sd_idx[i] + 1 << " " 
+                       << sd_r[sorted_sd_idx[i]] << " "<< b[sorted_sd_idx[i]] << ", ";
+         }
+         Rcpp::Rcout << std::endl; 
+       }
        
        if (F_test) {
          std::vector<int> sel_b;
@@ -151,7 +166,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y,
          }
          
          // Check if support supper set converges
-         if (iter > 0) {
+         if (iter > 2) {
            if (haveSameElements(support_ss, sel_b)) {
              F_test = false;
              if (verbose_i) {
@@ -252,6 +267,7 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
      });
    
    arma::mat S = (X.t() * X) / n;  
+   arma::mat R = cor(X);
    arma::vec sigma2_hat = S.diag();
    
    arma::mat W_old = S;
@@ -279,8 +295,9 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
        
        arma::mat W_11 = W(idx, idx);
        arma::colvec s_12 = S.submat(idx, uvec{(unsigned int)j});
+       arma::colvec r_12 = R.submat(idx, uvec{(unsigned int)j});
        double s_22 = S(j, j);
-       List fitted = lasso_autotune(W_11, s_12, 
+       List fitted = lasso_autotune(W_11, s_12, r_12,
                                     sigma2_hat(j), n, s_22, 
                                     X.col(j), X.cols(idx), 
                                     j, iter, alpha, F_crit_values,
