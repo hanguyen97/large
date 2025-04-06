@@ -77,6 +77,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
    int d = std::min(n-2, p);
    arma::colvec X_r_old = X_Y;
    arma::vec b_old = arma::zeros<arma::colvec>(p);
+   arma::vec b = b_old;
    double e_old = 1e6;
    bool F_test = true;
    double thresh = -1;
@@ -99,7 +100,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
      }
      
      if (e_old > 0.0001) {
-       vec b = b_old;
+       b = b_old;
        vec X_r = X_r_old;
        vec sd_r = zeros<vec>(p);
        
@@ -120,6 +121,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
        }
        
        arma::uvec sorted_sd_idx;
+       // sorted_sd_idx = sort_index(sd_r, "descend");
        if (iter == 0) {
          sorted_sd_idx = sort_index(abs(r_XY), "descend");
        } else {
@@ -157,7 +159,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
              if (verbose_i) {
                Rcout << "selected b: ";
                for (int i = 0; i < sel_b.size(); i++) {
-                 Rcpp::Rcout << sel_b[i] + 1 << " ";
+                 Rcpp::Rcout << sel_b[i] + 1 << " " << b[sel_b[i]] << " ";
                }
                Rcpp::Rcout << std::endl; 
              }
@@ -166,7 +168,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
          }
          
          // Check if support supper set converges
-         if (iter > 2) {
+         if (iter > 1) {
            if (haveSameElements(support_ss, sel_b)) {
              F_test = false;
              if (verbose_i) {
@@ -233,7 +235,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
      }
    }
    
-   return List::create(Named("b")=b_old,
+   return List::create(Named("b")=b,
                        Named("sigma2")=sigma2,
                        Named("lambda")=thresh);
  }
@@ -247,8 +249,10 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
 //' @param maxit Maximum number of iterations of outer loop. Default 10,000
 //' @return Estimated precision matrix
 // [[Rcpp::export]]
-List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4, 
-                      int maxit = 1e4, bool verbose = true, bool verbose_i = false) {
+List glasso_autotune(const arma::mat& X, double alpha = 0.1, 
+                     double penalize_diag = false,
+                     double thr = 1e-4, int maxit = 1e4, 
+                     bool verbose = true, bool verbose_i = false) {
    
    int n = X.n_rows;
    int p = X.n_cols;
@@ -270,19 +274,38 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
    arma::mat R = cor(X);
    arma::vec sigma2_hat = S.diag();
    
-   arma::mat W_old = S;
    arma::mat W = S;
    arma::mat Theta = zeros<mat>(p, p);
    
    double e_old = 1e6;
    double e = 0;
    bool final_cycle = false;
+   bool valid_diag = true;
    int niter = -1;
    
    double lambda_tmp = -1;
    arma::vec lambdav(p);
    lambdav.fill(-1);
    arma::vec b_hat(p-1, fill::zeros);
+   
+   if (penalize_diag) {
+     for (int j = 0; j < p; j++) {
+       arma::uvec idx = regspace<uvec>(0, p - 1);
+       idx.shed_row(j);
+       arma::colvec s_12 = S.submat(idx, uvec{(unsigned int)j});
+       W(j, j) = W(j, j) + 0.5 * max(abs(s_12)) ;
+     }
+     
+     if (verbose) {
+       Rcout << "Penalized diagonal updates: ";
+       for (int j = 0; j < p; j++) {
+         Rcpp::Rcout << "Node " << (j+1) << " " << S(j,j) << " " << W(j, j) << ", ";
+       }
+       Rcpp::Rcout << std::endl; 
+     }
+   }
+   
+   arma::mat W_old = W;
    
    for (int iter = 0; iter < maxit; iter++) {
      if (verbose) {
@@ -318,6 +341,12 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
          arma::mat Thetasub = -Theta(j, j) * b_hat;
          Theta.submat(idx, uvec{(unsigned int)j}) = Thetasub;
          Theta.submat(uvec{(unsigned int)j}, idx) = trans(Thetasub);
+         
+         if (Theta(j, j) < 0) {
+           Rcout << "Diagonal of node " << j + 1 << " is negative. Consider a smaller alpha threshold!" << std::endl;
+           valid_diag = false;
+         }
+         
        }
        
      }
@@ -353,5 +382,6 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1, double thr = 1e-4,
    return List::create(Named("Theta") = Theta, 
                        Named("sigma2.hat") = sigma2_hat,
                        Named("niter") = niter,
-                       Named("converged") = converged);
+                       Named("converged") = converged,
+                       Named("valid_diag") = valid_diag);
  }
