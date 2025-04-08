@@ -79,6 +79,8 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
    arma::vec b_old = arma::zeros<arma::colvec>(p);
    arma::vec b = b_old;
    double e_old = 1e6;
+   double sel_sigma2 = var(y);
+   double sigma2_old = 1e6;
    bool F_test = true;
    double thresh = -1;
    std::vector<int> support_ss;
@@ -139,8 +141,8 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
        
        if (F_test) {
          std::vector<int> sel_b;
-         double sel_sigma2 = var(y);
          std::vector<int> new_b = sel_b;
+         sel_sigma2 = var(y);
          
          // Sequential F test for variable selection
          for (size_t j = 0; j < d; j++) {
@@ -180,6 +182,13 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
              }
            } else {
              updateSupport(support_ss, sel_b);
+           }
+           
+           if (abs(sel_sigma2 - sigma2_old) < 0.0001) {
+             F_test = false;
+             if (verbose_i) {
+               Rcout << "sigma2 value converges" << std::endl; 
+             }
            }
          }
          // std::vector<int> support_tmp;
@@ -225,6 +234,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
        
        b_old = b;
        X_r_old = X_r;
+       sigma2_old = sel_sigma2;
        double e = mean(square(X_r_old));
        
        if (abs(e - e_old) > 0.0001) {
@@ -296,13 +306,13 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1,
        W(j, j) = W(j, j) + 0.5 * max(abs(s_12)) ;
      }
      
-     if (verbose) {
-       Rcout << "Penalized diagonal updates: ";
-       for (int j = 0; j < p; j++) {
-         Rcpp::Rcout << "Node " << (j+1) << " " << S(j,j) << " " << W(j, j) << ", ";
-       }
-       Rcpp::Rcout << std::endl; 
-     }
+     // if (verbose) {
+     //   Rcout << "Penalized diagonal updates: ";
+     //   for (int j = 0; j < p; j++) {
+     //     Rcpp::Rcout << "Node " << (j+1) << " " << S(j,j) << " " << W(j, j) << ", ";
+     //   }
+     //   Rcpp::Rcout << std::endl; 
+     // }
    }
    
    arma::mat W_old = W;
