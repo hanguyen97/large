@@ -84,6 +84,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
    bool F_test = true;
    double thresh = -1;
    std::vector<int> support_ss;
+   std::vector<int> support_ss_old;
    std::vector<int> sel_b;
    
    if (lambda0 == -1) {
@@ -94,11 +95,6 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
      
      if (verbose_i) {
        Rcout << "node " << node+1 << " inner iter " << iter+1 << " sigma2 " << sigma2 << std::endl;
-       // Rcpp::Rcout << "Selected node " << sel_b.size() << " ";
-       // for (int i = 0; i < sel_b.size(); i++) {
-       //   Rcpp::Rcout << sel_b[i]+1 << " ";
-       // }
-       // Rcpp::Rcout << std::endl; 
      }
      
      if (e_old > 0.0001) {
@@ -169,9 +165,18 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
            }
          }
          
-         // Check if support supper set converges
-         if (iter > 1) {
-           if (haveSameElements(support_ss, sel_b)) {
+         if (verbose_i) {
+           Rcout << "previous support super set: ";
+           for (int i = 0; i < support_ss.size(); i++) {
+             Rcpp::Rcout << support_ss[i] + 1 << " ";
+           }
+           Rcpp::Rcout << std::endl; 
+         }
+         
+         updateSupport(support_ss, sel_b);
+         if (iter > 0) {
+           // Check if support supper set converges
+           if (haveSameElements(support_ss, support_ss_old)) {
              F_test = false;
              if (verbose_i) {
                Rcout << "support super set converges: ";
@@ -180,10 +185,9 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
                }
                Rcpp::Rcout << std::endl; 
              }
-           } else {
-             updateSupport(support_ss, sel_b);
-           }
+           } 
            
+           // Check if support supper set converges
            if (abs(sel_sigma2 - sigma2_old) < 0.0001) {
              F_test = false;
              if (verbose_i) {
@@ -191,50 +195,12 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
              }
            }
          }
-         // std::vector<int> support_tmp;
-         // if (iter == 0) {
-         //   support_tmp = {-99};
-         // } else {
-         //   support_tmp = support_ss;
-         // }
-         // updateSupport(support_ss, sel_b);
-         // if (support_ss == support_tmp) {
-         //   F_test = false;
-         //   if (verbose_i) {
-         //     Rcout << "support super set converges: ";
-         //     for (int i = 0; i < support_ss.size(); i++) {
-         //       Rcpp::Rcout << support_ss[i] + 1 << " ";
-         //     }
-         //     Rcpp::Rcout << std::endl; 
-         //   }
-         // } 
-         // else {
-         //   double e1 = 0.0;
-         //   double e2 = 0.0;
-         //   if (sel_b.size() > 0) {
-         //     e1 = sum(abs(b(sorted_sd_idx.subvec(0, sel_b.size()-1)))); 
-         //   }
-         //   if (support_set.size() > 0) {
-         //     e2 = sum(abs(b_old(sorted_sd_idx.subvec(0, support_set.size()-1))));
-         //   }
-         //   if (abs(e1 - e2) < 0.0001) {
-         //     if (verbose_i) {
-         //       Rcout << "support set converges v2: ";
-         //       for (int i = 0; i < support_set.size(); i++) {
-         //         Rcpp::Rcout << support_set[i] + 1 << " ";
-         //       }
-         //       Rcpp::Rcout << std::endl; 
-         //     }
-         //     F_test = false;
-         //   } else {
-         //     support_set = sel_b;
-         //   }
-         // }
        }
        
        b_old = b;
        X_r_old = X_r;
        sigma2_old = sel_sigma2;
+       support_ss_old = support_ss;
        double e = mean(square(X_r_old));
        
        if (abs(e - e_old) > 0.0001) {
@@ -267,11 +233,6 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1,
    int n = X.n_rows;
    int p = X.n_cols;
    
-   // if (p > 50 and verbose_i==true) {
-   //   Rcout << "turn off inner loop log since p > 50" << std::endl;
-   //   verbose_i = false;
-   // }
-   
    Rcpp::Function qf("qf");
    // Prevent non-positive df2 of F-test
    int d = std::min(n-2, p-1);
@@ -298,23 +259,6 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1,
    lambdav.fill(-1);
    arma::vec b_hat(p-1, fill::zeros);
    
-   if (penalize_diag) {
-     for (int j = 0; j < p; j++) {
-       arma::uvec idx = regspace<uvec>(0, p - 1);
-       idx.shed_row(j);
-       arma::colvec s_12 = S.submat(idx, uvec{(unsigned int)j});
-       W(j, j) = W(j, j) + 0.5 * max(abs(s_12)) ;
-     }
-     
-     // if (verbose) {
-     //   Rcout << "Penalized diagonal updates: ";
-     //   for (int j = 0; j < p; j++) {
-     //     Rcpp::Rcout << "Node " << (j+1) << " " << S(j,j) << " " << W(j, j) << ", ";
-     //   }
-     //   Rcpp::Rcout << std::endl; 
-     // }
-   }
-   
    arma::mat W_old = W;
    
    for (int iter = 0; iter < maxit; iter++) {
@@ -340,8 +284,7 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1,
        sigma2_hat(j) = fitted["sigma2"];
        lambda_tmp = fitted["lambda"];
        lambdav(j) = lambda_tmp / sigma2_hat(j);
-       //lambda(j) = fitted["lambda"]/fitted["sigma2"];
-       
+
        arma::mat Wsub = W_11 * b_hat;
        W.submat(idx, uvec{(unsigned int)j}) = Wsub;
        W.submat(uvec{(unsigned int)j}, idx) = trans(Wsub);
@@ -389,9 +332,11 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1,
    } else {
      Rcout << "final glasso iter = " << niter << std::endl;
    }
+   if (!valid_diag) {
+     converged = 0;
+   }
    return List::create(Named("Theta") = Theta, 
                        Named("sigma2.hat") = sigma2_hat,
                        Named("niter") = niter,
-                       Named("converged") = converged,
-                       Named("valid_diag") = valid_diag);
+                       Named("converged") = converged);
  }
