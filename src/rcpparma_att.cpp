@@ -226,7 +226,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
 //' @return Estimated precision matrix
 // [[Rcpp::export]]
 List glasso_autotune(const arma::mat& X, double alpha = 0.1, 
-                     double penalize_diag = false,
+                     double penalize_diag = true,
                      double thr = 1e-4, int maxit = 1e4, 
                      bool verbose = true, bool verbose_i = false) {
    
@@ -260,6 +260,15 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1,
    arma::vec b_hat(p-1, fill::zeros);
    
    arma::mat W_old = W;
+   
+   if (penalize_diag) {
+     for (int j = 0; j < p; j++) {
+       arma::uvec idx = regspace<uvec>(0, p - 1);
+       idx.shed_row(j);
+       arma::colvec s_12 = S.submat(idx, uvec{(unsigned int)j});
+       W(j, j) = W(j, j) + 0.5 * max(abs(s_12)) ;
+     }
+   }
    
    for (int iter = 0; iter < maxit; iter++) {
      if (verbose) {
