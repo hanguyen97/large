@@ -44,7 +44,7 @@ X <- mvrnorm(n=n, mu=rep(0,p), Sigma=Sigma)
 # Run autotune GLASSO
 library(ATTglasso)
 start.T <- Sys.time()
-out.att.glasso <- glasso_autotune(X=X, alpha=0.1, thr=1e-4)
+out.att.glasso <- glasso_autotune(X=X, alpha=0.02, thr=1e-4)
 (Sys.time()-start.T )
 
 round(out.att.glasso$Theta,4)
