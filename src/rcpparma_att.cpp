@@ -266,7 +266,7 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1,
        arma::uvec idx = regspace<uvec>(0, p - 1);
        idx.shed_row(j);
        arma::colvec s_12 = S.submat(idx, uvec{(unsigned int)j});
-       W(j, j) = W(j, j) + max(abs(s_12)) ;
+       W(j, j) = W(j, j) + 0.5 * max(abs(s_12)) ;
      }
    }
    
