@@ -62,10 +62,22 @@ double get_LSsigma2(const arma::colvec& y, const arma::mat& X) {
   return sigma2_hat;
 }
 
+std::vector<arma::uvec> get_sorted_indices(const arma::mat& R) {
+  std::vector<arma::uvec> sorted_indices_per_col;
+  
+  for (arma::uword j = 0; j < R.n_cols; ++j) {
+    arma::vec col = arma::abs(R.col(j));
+    col.shed_row(j);  // Exclude diagonal
+    arma::uvec indices = arma::sort_index(col, "descend");
+    sorted_indices_per_col.push_back(indices);
+  }
+  
+  return sorted_indices_per_col;
+}
 
 //' Inner Loop using Autotune Lasso  
 // [[Rcpp::export]]
-List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::colvec& r_XY, 
+List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::uvec& r_XY, 
                      double sigma2, int n, double s_22, 
                      const arma::colvec& y, const arma::mat& Z, 
                      int node, int outer_iter, 
@@ -91,123 +103,122 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
      lambda0 = max(abs(X_Y)) * (1 / s_22);
    }
    
-   for (int iter = 0; iter <= 1000; iter++) {
+   for (int iter = 0; iter <= 50; iter++) {
      
      if (verbose_i) {
-       Rcout << "node " << node+1 << " inner iter " << iter+1 << " sigma2 " << sigma2 << std::endl;
+       Rcout << "node " << node+1 << " inner iter " << iter+1 << " sigma2 " << sigma2 << " e_old " << e_old << std::endl;
      }
      
-     if (e_old > 0.0001) {
-       b = b_old;
-       vec X_r = X_r_old;
-       vec sd_r = zeros<vec>(p);
+     // if (e_old > 0.0001) {
+     b = b_old;
+     vec X_r = X_r_old;
+     vec sd_r = zeros<vec>(p);
+     
+     thresh = lambda0 * sigma2;
+     for (int j = 0; j < p; j++) {
+       X_r += X_X.col(j) * b[j];
+       double X_rj = X_r[j];
        
-       thresh = lambda0 * sigma2;
-       for (int j = 0; j < p; j++) {
-         X_r += X_X.col(j) * b[j];
-         double X_rj = X_r[j];
-         
-         if (abs(X_rj) < 0.5 * thresh) {
-           b[j] = 0;
-         } else {
-           b[j] = (abs(X_rj) - 0.5 * thresh) * ((X_rj > 0) ? 1 : -1) / X_X(j, j);
-         }
-         
-         X_r -= X_X.col(j) * b[j];
-         arma::colvec pr = y - Z.cols(find(linspace<uvec>(0, p - 1, p) != j)) * b(find(linspace<uvec>(0, p - 1, p) != j));
-         sd_r[j] = sqrt(as_scalar(pr.t() * pr) / n);
+       if (abs(X_rj) < 0.5 * thresh) {
+         b[j] = 0;
+       } else {
+         b[j] = (abs(X_rj) - 0.5 * thresh) * ((X_rj > 0) ? 1 : -1) / X_X(j, j);
        }
        
-       arma::uvec sorted_sd_idx;
-       // sorted_sd_idx = sort_index(sd_r, "descend");
-       if (iter == 0) {
-         sorted_sd_idx = sort_index(abs(r_XY), "descend");
-       } else {
-         sorted_sd_idx = sort_index(sd_r, "descend");
+       X_r -= X_X.col(j) * b[j];
+       arma::colvec pr = y - Z.cols(find(linspace<uvec>(0, p - 1, p) != j)) * b(find(linspace<uvec>(0, p - 1, p) != j));
+       sd_r[j] = sqrt(as_scalar(pr.t() * pr) / n);
+     }
+     
+     arma::uvec sorted_sd_idx;
+     // sorted_sd_idx = sort_index(sd_r, "descend");
+     if (iter == 0) {
+       sorted_sd_idx = r_XY;
+     } else {
+       sorted_sd_idx = sort_index(sd_r, "descend");
+     }
+     
+     if (verbose_i) {
+       Rcout << "sorted_sd_idx with sd_val: ";
+       for (int i = 0; i < 5; i++) {
+         Rcpp::Rcout << sorted_sd_idx[i] + 1 << " " 
+                     << sd_r[sorted_sd_idx[i]] << " "<< b[sorted_sd_idx[i]] << ", ";
+       }
+       Rcpp::Rcout << std::endl; 
+     }
+     
+     if (F_test) {
+       std::vector<int> sel_b;
+       std::vector<int> new_b = sel_b;
+       sel_sigma2 = var(y);
+       
+       // Sequential F test for variable selection
+       for (size_t j = 0; j < d; j++) {
+         // Set sigma2 to sigma2 ols 
+         sigma2 = sel_sigma2;
+         
+         int j_idx = sorted_sd_idx[j];
+         new_b.push_back(j_idx);
+         double new_sigma2 = get_LSsigma2(y, Z.cols(sorted_sd_idx.subvec(0, j)));
+         double F_stat = (sel_sigma2 - new_sigma2) / (new_sigma2 / (n-(j+1)));
+         
+         if (F_stat > F_crit_values[j]) {
+           sel_b = new_b;
+           sel_sigma2 = new_sigma2;
+         } else {
+           if (verbose_i) {
+             Rcout << "selected b: ";
+             for (int i = 0; i < sel_b.size(); i++) {
+               Rcpp::Rcout << sel_b[i] + 1 << " " << b[sel_b[i]] << " ";
+             }
+             Rcpp::Rcout << std::endl; 
+           }
+           break;
+         }
        }
        
        if (verbose_i) {
-         Rcout << "sorted_sd_idx with sd_val: ";
-         for (int i = 0; i < 5; i++) {
-           Rcpp::Rcout << sorted_sd_idx[i] + 1 << " " 
-                       << sd_r[sorted_sd_idx[i]] << " "<< b[sorted_sd_idx[i]] << ", ";
+         Rcout << "previous support super set: ";
+         for (int i = 0; i < support_ss.size(); i++) {
+           Rcpp::Rcout << support_ss[i] + 1 << " ";
          }
          Rcpp::Rcout << std::endl; 
        }
        
-       if (F_test) {
-         std::vector<int> sel_b;
-         std::vector<int> new_b = sel_b;
-         sel_sigma2 = var(y);
-         
-         // Sequential F test for variable selection
-         for (size_t j = 0; j < d; j++) {
-           // Set sigma2 to sigma2 ols 
-           sigma2 = sel_sigma2;
-           
-           int j_idx = sorted_sd_idx[j];
-           new_b.push_back(j_idx);
-           double new_sigma2 = get_LSsigma2(y, Z.cols(sorted_sd_idx.subvec(0, j)));
-           double F_stat = (sel_sigma2 - new_sigma2) / (new_sigma2 / (n-(j+1)));
-           
-           if (F_stat > F_crit_values[j]) {
-             sel_b = new_b;
-             sel_sigma2 = new_sigma2;
-           } else {
-             if (verbose_i) {
-               Rcout << "selected b: ";
-               for (int i = 0; i < sel_b.size(); i++) {
-                 Rcpp::Rcout << sel_b[i] + 1 << " " << b[sel_b[i]] << " ";
-               }
-               Rcpp::Rcout << std::endl; 
+       updateSupport(support_ss, sel_b);
+       if (iter > 0) {
+         // Check if support supper set converges
+         if (haveSameElements(support_ss, support_ss_old)) {
+           F_test = false;
+           if (verbose_i) {
+             Rcout << "support super set converges: ";
+             for (int i = 0; i < support_ss.size(); i++) {
+               Rcpp::Rcout << support_ss[i] + 1 << " ";
              }
-             break;
+             Rcpp::Rcout << std::endl; 
            }
-         }
+         } 
          
-         if (verbose_i) {
-           Rcout << "previous support super set: ";
-           for (int i = 0; i < support_ss.size(); i++) {
-             Rcpp::Rcout << support_ss[i] + 1 << " ";
-           }
-           Rcpp::Rcout << std::endl; 
-         }
-         
-         updateSupport(support_ss, sel_b);
-         if (iter > 0) {
-           // Check if support supper set converges
-           if (haveSameElements(support_ss, support_ss_old)) {
-             F_test = false;
-             if (verbose_i) {
-               Rcout << "support super set converges: ";
-               for (int i = 0; i < support_ss.size(); i++) {
-                 Rcpp::Rcout << support_ss[i] + 1 << " ";
-               }
-               Rcpp::Rcout << std::endl; 
-             }
-           } 
-           
-           // Check if support supper set converges
-           if (abs(sel_sigma2 - sigma2_old) < 0.0001) {
-             F_test = false;
-             if (verbose_i) {
-               Rcout << "sigma2 value converges" << std::endl; 
-             }
+         // Check if support supper set converges
+         if (abs(sel_sigma2 - sigma2_old) < 0.0001) {
+           F_test = false;
+           if (verbose_i) {
+             Rcout << "sigma2 value converges" << std::endl; 
            }
          }
        }
-       
-       b_old = b;
-       X_r_old = X_r;
-       sigma2_old = sel_sigma2;
-       support_ss_old = support_ss;
-       double e = mean(square(X_r_old));
-       
-       if (abs(e - e_old) > 0.0001) {
-         e_old = e;
-       } else {
-         break;
-       }
+     }
+     
+     b_old = b;
+     X_r_old = X_r;
+     sigma2_old = sel_sigma2;
+     support_ss_old = support_ss;
+     double e = mean(square(X_r_old));
+     
+     if (abs(e - e_old) > 0.0001) {
+       e_old = e;
+     } else {
+       break;
      }
    }
    
@@ -226,9 +237,9 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::c
 //' @return Estimated precision matrix
 // [[Rcpp::export]]
 List glasso_autotune(const arma::mat& X, double alpha = 0.1, 
-                     double penalize_diag = true,
-                     double thr = 1e-4, int maxit = 1e4, 
-                     bool verbose = true, bool verbose_i = false) {
+                      double penalize_diag = true,
+                      double thr = 1e-4, int maxit = 1e4, 
+                      bool verbose = true, bool verbose_i = false) {
    
    int n = X.n_rows;
    int p = X.n_cols;
@@ -239,7 +250,7 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1,
    arma::vec F_crit_values = arma::linspace<arma::vec>(1, d, d);  
    F_crit_values.transform([&](double j) { 
      return Rcpp::as<double>(qf(1 - alpha, 1, n-(j+1)));
-     });
+   });
    
    arma::mat S = (X.t() * X) / n;  
    arma::mat R = cor(X);
@@ -270,6 +281,9 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1,
      }
    }
    
+   // Sort indices of cor matrix
+   std::vector<arma::uvec> R_sorted_idx = get_sorted_indices(R);
+   
    for (int iter = 0; iter < maxit; iter++) {
      if (verbose) {
        Rcout << "glasso iter = " << iter+1 << "; error = " << round(e_old * 1000) / 1000 << std::endl;
@@ -281,9 +295,12 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1,
        
        arma::mat W_11 = W(idx, idx);
        arma::colvec s_12 = S.submat(idx, uvec{(unsigned int)j});
-       arma::colvec r_12 = R.submat(idx, uvec{(unsigned int)j});
+       // arma::colvec r_12 = R.submat(idx, uvec{(unsigned int)j});
        double s_22 = S(j, j);
-       List fitted = lasso_autotune(W_11, s_12, r_12,
+       
+       // std::cout << "Test: " << R_sorted_idx[j].size() << std::endl;
+       
+       List fitted = lasso_autotune(W_11, s_12, R_sorted_idx[j],
                                     sigma2_hat(j), n, s_22, 
                                     X.col(j), X.cols(idx), 
                                     j, iter, alpha, F_crit_values,
@@ -293,7 +310,7 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1,
        sigma2_hat(j) = fitted["sigma2"];
        lambda_tmp = fitted["lambda"];
        lambdav(j) = lambda_tmp / sigma2_hat(j);
-
+       
        arma::mat Wsub = W_11 * b_hat;
        W.submat(idx, uvec{(unsigned int)j}) = Wsub;
        W.submat(uvec{(unsigned int)j}, idx) = trans(Wsub);

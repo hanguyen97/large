@@ -12,14 +12,14 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // lasso_autotune
-List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::colvec& r_XY, double sigma2, int n, double s_22, const arma::colvec& y, const arma::mat& Z, int node, int outer_iter, double alpha, const arma::vec& F_crit_values, double lambda0, bool verbose_i);
+List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::uvec& r_XY, double sigma2, int n, double s_22, const arma::colvec& y, const arma::mat& Z, int node, int outer_iter, double alpha, const arma::vec& F_crit_values, double lambda0, bool verbose_i);
 RcppExport SEXP _ATTglasso_lasso_autotune(SEXP X_XSEXP, SEXP X_YSEXP, SEXP r_XYSEXP, SEXP sigma2SEXP, SEXP nSEXP, SEXP s_22SEXP, SEXP ySEXP, SEXP ZSEXP, SEXP nodeSEXP, SEXP outer_iterSEXP, SEXP alphaSEXP, SEXP F_crit_valuesSEXP, SEXP lambda0SEXP, SEXP verbose_iSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::mat& >::type X_X(X_XSEXP);
     Rcpp::traits::input_parameter< const arma::colvec& >::type X_Y(X_YSEXP);
-    Rcpp::traits::input_parameter< const arma::colvec& >::type r_XY(r_XYSEXP);
+    Rcpp::traits::input_parameter< const arma::uvec& >::type r_XY(r_XYSEXP);
     Rcpp::traits::input_parameter< double >::type sigma2(sigma2SEXP);
     Rcpp::traits::input_parameter< int >::type n(nSEXP);
     Rcpp::traits::input_parameter< double >::type s_22(s_22SEXP);

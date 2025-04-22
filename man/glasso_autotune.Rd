@@ -7,7 +7,7 @@
 glasso_autotune(
   X,
   alpha = 0.1,
-  penalize_diag = FALSE,
+  penalize_diag = TRUE,
   thr = 1e-04,
   maxit = 10000L,
   verbose = TRUE,
