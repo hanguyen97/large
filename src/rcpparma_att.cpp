@@ -130,24 +130,25 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
        sd_r[j] = sqrt(as_scalar(pr.t() * pr) / n);
      }
      
-     arma::uvec sorted_sd_idx;
-     // sorted_sd_idx = sort_index(sd_r, "descend");
-     if (iter == 0) {
-       sorted_sd_idx = r_XY;
-     } else {
-       sorted_sd_idx = sort_index(sd_r, "descend");
-     }
-     
-     if (verbose_i) {
-       Rcout << "sorted_sd_idx with sd_val: ";
-       for (int i = 0; i < 5; i++) {
-         Rcpp::Rcout << sorted_sd_idx[i] + 1 << " " 
-                     << sd_r[sorted_sd_idx[i]] << " "<< b[sorted_sd_idx[i]] << ", ";
-       }
-       Rcpp::Rcout << std::endl; 
-     }
      
      if (F_test) {
+       arma::uvec sorted_sd_idx;
+       // sorted_sd_idx = sort_index(sd_r, "descend");
+       if (iter == 0) {
+         sorted_sd_idx = r_XY;
+       } else {
+         sorted_sd_idx = sort_index(sd_r, "descend");
+       }
+       
+       if (verbose_i) {
+         Rcout << "sorted_sd_idx with sd_val: ";
+         for (int i = 0; i < 5; i++) {
+           Rcpp::Rcout << sorted_sd_idx[i] + 1 << " " 
+                       << sd_r[sorted_sd_idx[i]] << " "<< b[sorted_sd_idx[i]] << ", ";
+         }
+         Rcpp::Rcout << std::endl; 
+       }
+       
        std::vector<int> sel_b;
        std::vector<int> new_b = sel_b;
        sel_sigma2 = var(y);
