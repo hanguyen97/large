@@ -103,7 +103,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
      lambda0 = max(abs(X_Y)) * (1 / s_22);
    }
    
-   for (int iter = 0; iter <= 50; iter++) {
+   for (int iter = 0; iter <= 1000; iter++) {
      
      if (verbose_i) {
        Rcout << "node " << node+1 << " inner iter " << iter+1 << " sigma2 " << sigma2 << " e_old " << e_old << std::endl;
@@ -126,8 +126,10 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
        }
        
        X_r -= X_X.col(j) * b[j];
-       arma::colvec pr = y - Z.cols(find(linspace<uvec>(0, p - 1, p) != j)) * b(find(linspace<uvec>(0, p - 1, p) != j));
-       sd_r[j] = sqrt(as_scalar(pr.t() * pr) / n);
+       if (F_test) {
+         arma::colvec pr = y - Z.cols(find(linspace<uvec>(0, p - 1, p) != j)) * b(find(linspace<uvec>(0, p - 1, p) != j));
+         sd_r[j] = sqrt(as_scalar(pr.t() * pr) / n);
+       }
      }
      
      
