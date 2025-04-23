@@ -105,9 +105,9 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
    
    for (int iter = 0; iter <= 1000; iter++) {
      
-     if (verbose_i) {
-       Rcout << "node " << node+1 << " inner iter " << iter+1 << " sigma2 " << sigma2 << " e_old " << e_old << std::endl;
-     }
+     // if (verbose_i) {
+     //   Rcout << "node " << node+1 << " inner iter " << iter+1 << " sigma2 " << sigma2 << " e_old " << e_old << std::endl;
+     // }
      
      // if (e_old > 0.0001) {
      b = b_old;
@@ -142,14 +142,14 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
          sorted_sd_idx = sort_index(sd_r, "descend");
        }
        
-       if (verbose_i) {
-         Rcout << "sorted_sd_idx with sd_val: ";
-         for (int i = 0; i < 5; i++) {
-           Rcpp::Rcout << sorted_sd_idx[i] + 1 << " " 
-                       << sd_r[sorted_sd_idx[i]] << " "<< b[sorted_sd_idx[i]] << ", ";
-         }
-         Rcpp::Rcout << std::endl; 
-       }
+       // if (verbose_i) {
+       //   Rcout << "sorted_sd_idx with sd_val: ";
+       //   for (int i = 0; i < 5; i++) {
+       //     Rcpp::Rcout << sorted_sd_idx[i] + 1 << " " 
+       //                 << sd_r[sorted_sd_idx[i]] << " "<< b[sorted_sd_idx[i]] << ", ";
+       //   }
+       //   Rcpp::Rcout << std::endl; 
+       // }
        
        std::vector<int> sel_b;
        std::vector<int> new_b = sel_b;
@@ -169,45 +169,45 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
            sel_b = new_b;
            sel_sigma2 = new_sigma2;
          } else {
-           if (verbose_i) {
-             Rcout << "selected b: ";
-             for (int i = 0; i < sel_b.size(); i++) {
-               Rcpp::Rcout << sel_b[i] + 1 << " " << b[sel_b[i]] << " ";
-             }
-             Rcpp::Rcout << std::endl; 
-           }
+           // if (verbose_i) {
+           //   Rcout << "selected b: ";
+           //   for (int i = 0; i < sel_b.size(); i++) {
+           //     Rcpp::Rcout << sel_b[i] + 1 << " " << b[sel_b[i]] << " ";
+           //   }
+           //   Rcpp::Rcout << std::endl; 
+           // }
            break;
          }
        }
        
-       if (verbose_i) {
-         Rcout << "previous support super set: ";
-         for (int i = 0; i < support_ss.size(); i++) {
-           Rcpp::Rcout << support_ss[i] + 1 << " ";
-         }
-         Rcpp::Rcout << std::endl; 
-       }
+       // if (verbose_i) {
+       //   Rcout << "previous support super set: ";
+       //   for (int i = 0; i < support_ss.size(); i++) {
+       //     Rcpp::Rcout << support_ss[i] + 1 << " ";
+       //   }
+       //   Rcpp::Rcout << std::endl; 
+       // }
        
        updateSupport(support_ss, sel_b);
        if (iter > 0) {
          // Check if support supper set converges
          if (haveSameElements(support_ss, support_ss_old)) {
            F_test = false;
-           if (verbose_i) {
-             Rcout << "support super set converges: ";
-             for (int i = 0; i < support_ss.size(); i++) {
-               Rcpp::Rcout << support_ss[i] + 1 << " ";
-             }
-             Rcpp::Rcout << std::endl; 
-           }
+           // if (verbose_i) {
+           //   Rcout << "support super set converges: ";
+           //   for (int i = 0; i < support_ss.size(); i++) {
+           //     Rcpp::Rcout << support_ss[i] + 1 << " ";
+           //   }
+           //   Rcpp::Rcout << std::endl; 
+           // }
          } 
          
          // Check if support supper set converges
          if (abs(sel_sigma2 - sigma2_old) < 0.0001) {
            F_test = false;
-           if (verbose_i) {
-             Rcout << "sigma2 value converges" << std::endl; 
-           }
+           // if (verbose_i) {
+           //   Rcout << "sigma2 value converges" << std::endl; 
+           // }
          }
        }
      }
@@ -333,9 +333,15 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1,
        
      }
      
-     e = norm(W - W_old, "fro");
+     // e = norm(W - W_old, "fro");
+     // if (verbose) {
+     //   Rcout << "change in W.err = " << std::abs(e - e_old) << std::endl;
+     // }
+     
+     arma::mat W_diff = W - W_old;
+     e = arma::abs(W_diff).max() / arma::abs(W_old).max();
      if (verbose) {
-       Rcout << "change in W.err = " << std::abs(e - e_old) << std::endl;
+       Rcout << "change in W.err = " << e << std::endl;
      }
      
      if (final_cycle) { 
@@ -344,7 +350,9 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1,
        }
        break;
      }
-     if (std::abs(e - e_old) < thr) {
+     
+     // if (std::abs(e - e_old) < thr) {
+     if (e < thr) {
        final_cycle = true;
      } else {
        W_old = W;
