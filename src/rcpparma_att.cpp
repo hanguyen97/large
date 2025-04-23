@@ -75,6 +75,16 @@ std::vector<arma::uvec> get_sorted_indices(const arma::mat& R) {
   return sorted_indices_per_col;
 }
 
+double avg_offd_abs(const arma::mat& W) {
+  if (W.n_rows != W.n_cols) {
+    throw std::invalid_argument("Matrix must be square.");
+  }
+  arma::mat abs_W = arma::abs(W);
+  arma::mat diag_abs_W = arma::diagmat(abs_W);
+  
+  return arma::accu(abs_W - diag_abs_W) / (W.n_elem - W.n_rows);
+}
+
 //' Inner Loop using Autotune Lasso  
 // [[Rcpp::export]]
 List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::uvec& r_XY, 
@@ -234,14 +244,14 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
 //' Autotune Graphical Lasso 
 //'
 //' @param X Data matrix 
-//' @param alpha alpha value of F test
-//' @param thr Threshold for convergence. Default value is 1e-4.
-//' @param maxit Maximum number of iterations of outer loop. Default 10,000
+//' @param alpha alpha value of F test. Default value is 0.02.
+//' @param thr Threshold for convergence. Default value is 1e-4. Iterations stop when average absolute parameter change is less than thr * ave(abs(offdiag(s)))
+//' @param maxit Maximum number of iterations of outer loop. Default 100.
 //' @return Estimated precision matrix
 // [[Rcpp::export]]
-List glasso_autotune(const arma::mat& X, double alpha = 0.1, 
+List glasso_autotune(const arma::mat& X, double alpha = 0.02, 
                       double penalize_diag = true,
-                      double thr = 1e-4, int maxit = 1e4, 
+                      double thr = 1e-4, int maxit = 1e2, 
                       bool verbose = true, bool verbose_i = false) {
    
    int n = X.n_rows;
@@ -339,7 +349,8 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.1,
      // }
      
      arma::mat W_diff = W - W_old;
-     e = arma::abs(W_diff).max() / arma::abs(W_old).max();
+     // e = arma::abs(W_diff).max() / arma::abs(W_old).max();
+     e = avg_offd_abs(W_diff) / avg_offd_abs(W_old);
      if (verbose) {
        Rcout << "change in W.err = " << e << std::endl;
      }
