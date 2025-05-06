@@ -350,7 +350,8 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.02,
      
      arma::mat W_diff = W - W_old;
      // e = arma::abs(W_diff).max() / arma::abs(W_old).max();
-     e = avg_offd_abs(W_diff) / avg_offd_abs(W_old);
+     // e = avg_offd_abs(W_diff) / avg_offd_abs(W_old);
+     e = norm(W_diff, "fro") / norm(W_old, "fro");
      if (verbose) {
        Rcout << "change in W.err = " << e << std::endl;
      }
