@@ -9,11 +9,11 @@ lasso_autotune <- function(X_X, X_Y, r_XY, sigma2, n, s_22, y, Z, node, outer_it
 #' Autotune Graphical Lasso 
 #'
 #' @param X Data matrix 
-#' @param alpha alpha value of F test
-#' @param thr Threshold for convergence. Default value is 1e-4.
-#' @param maxit Maximum number of iterations of outer loop. Default 10,000
+#' @param alpha alpha value of F test. Default value is 0.02.
+#' @param thr Threshold for convergence. Default value is 1e-4. Iterations stop when average absolute parameter change is less than thr * ave(abs(offdiag(s)))
+#' @param maxit Maximum number of iterations of outer loop. Default 100.
 #' @return Estimated precision matrix
-glasso_autotune <- function(X, alpha = 0.1, penalize_diag = TRUE, thr = 1e-4, maxit = 1e4L, verbose = TRUE, verbose_i = FALSE) {
+glasso_autotune <- function(X, alpha = 0.02, penalize_diag = TRUE, thr = 0.05, maxit = 50L, verbose = TRUE, verbose_i = FALSE) {
     .Call(`_ATTglasso_glasso_autotune`, X, alpha, penalize_diag, thr, maxit, verbose, verbose_i)
 }
 

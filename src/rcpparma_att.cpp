@@ -149,7 +149,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
        if (iter == 0) {
          sorted_sd_idx = r_XY;
        } else {
-         sorted_sd_idx = sort_index(sd_r, "descend");
+         // sorted_sd_idx = sort_index(sd_r, "descend");
        }
        
        // if (verbose_i) {
@@ -165,14 +165,30 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
        std::vector<int> new_b = sel_b;
        sel_sigma2 = var(y);
        
+       arma::uvec sel_idx;
        // Sequential F test for variable selection
        for (size_t j = 0; j < d; j++) {
          // Set sigma2 to sigma2 ols 
          sigma2 = sel_sigma2;
          
-         int j_idx = sorted_sd_idx[j];
-         new_b.push_back(j_idx);
-         double new_sigma2 = get_LSsigma2(y, Z.cols(sorted_sd_idx.subvec(0, j)));
+         // Find index of the maximum element
+         auto max_it = std::max_element(sd_r.begin(), sd_r.end());
+         int max_idx = std::distance(sd_r.begin(), max_it);
+         // Set the maximum element to -1
+         sd_r[max_idx] = -1;
+         
+         arma::uword j_idx;
+         if (iter == 0) {
+           // int j_idx = sorted_sd_idx[j];
+           j_idx = sorted_sd_idx[j];
+         } else {
+           // int j_idx = max_idx;
+           j_idx = max_idx;
+         }
+         new_b.push_back(static_cast<int>(j_idx));
+         sel_idx = arma::join_vert(sel_idx, arma::uvec{j_idx});
+         // double new_sigma2 = get_LSsigma2(y, Z.cols(sorted_sd_idx.subvec(0, j)));
+         double new_sigma2 = get_LSsigma2(y, Z.cols(sel_idx));
          double F_stat = (sel_sigma2 - new_sigma2) / (new_sigma2 / (n-(j+1)));
          
          if (F_stat > F_crit_values[j]) {
@@ -251,7 +267,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
 // [[Rcpp::export]]
 List glasso_autotune(const arma::mat& X, double alpha = 0.02, 
                       double penalize_diag = true,
-                      double thr = 1e-4, int maxit = 1e2, 
+                      double thr = 0.05, int maxit = 50, 
                       bool verbose = true, bool verbose_i = false) {
    
    int n = X.n_rows;
@@ -352,9 +368,9 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.02,
      // e = arma::abs(W_diff).max() / arma::abs(W_old).max();
      // e = avg_offd_abs(W_diff) / avg_offd_abs(W_old);
      e = norm(W_diff, "fro") / norm(W_old, "fro");
-     if (verbose) {
-       Rcout << "change in W.err = " << e << std::endl;
-     }
+     // if (verbose) {
+     //   Rcout << "change in W.err = " << e << std::endl;
+     // }
      
      if (final_cycle) { 
        if (iter < maxit-1) {

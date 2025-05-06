@@ -6,10 +6,10 @@
 \usage{
 glasso_autotune(
   X,
-  alpha = 0.1,
+  alpha = 0.02,
   penalize_diag = TRUE,
-  thr = 1e-04,
-  maxit = 10000L,
+  thr = 0.05,
+  maxit = 50L,
   verbose = TRUE,
   verbose_i = FALSE
 )
@@ -17,11 +17,11 @@ glasso_autotune(
 \arguments{
 \item{X}{Data matrix}
 
-\item{alpha}{alpha value of F test}
+\item{alpha}{alpha value of F test. Default value is 0.02.}
 
-\item{thr}{Threshold for convergence. Default value is 1e-4.}
+\item{thr}{Threshold for convergence. Default value is 1e-4. Iterations stop when average absolute parameter change is less than thr * ave(abs(offdiag(s)))}
 
-\item{maxit}{Maximum number of iterations of outer loop. Default 10,000}
+\item{maxit}{Maximum number of iterations of outer loop. Default 100.}
 }
 \value{
 Estimated precision matrix
