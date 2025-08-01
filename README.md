@@ -7,10 +7,10 @@ Gaussian Graphical Models
 We provide the `ATTglasso` package for automatic tuning of
 regularization parameters in graphical Lasso (GLASSO), enhancing both
 estimation accuracy and graph recovery by leveraging penalties. Given
-$n$ i.i.d. observations of $X \sim N(0, \Theta^{-1})$, GLASSO estimates
-the precision matrix $\Theta$ of a Gaussian graphical model (GGM) by
-maximizing the $\ell_1$-penalized log-likelihood over the space of
-positive semi-definite matrices:
+$n$ i.i.d. observations of $X \sim N_p(0, \Theta^{-1})$, GLASSO
+estimates the precision matrix $\Theta$ of a Gaussian graphical model
+(GGM) by maximizing the $\ell_1$-penalized log-likelihood over the space
+of positive semi-definite matrices:
 <p>
 $$
     \hat{\Theta} \in \underset{\Theta \succeq 0}{\arg\max} \left\{ \log \det(\Theta) - \mathrm{trace}(S\Theta) - \lambda \|\Theta\|_1 \right\},
@@ -24,9 +24,10 @@ estimate.
 
 Unlike standard GLASSO, which relies on a single global penalty,
 `AutotuneGLASSO` adaptively learns a set of node-specific penalties
-$\lambda_j$. It does so by augmenting the nodewise Lasso regression step
-to jointly estimate both regression coefficients and error variances,
-allowing more flexible and data-driven regularization across nodes.
+$\lambda_j, j = 1, \ldots, p$. It does so by augmenting the nodewise
+Lasso regression step to jointly estimate both regression coefficients
+and error variances, allowing more flexible and data-driven
+regularization across nodes.
 
 ## Installation
 
@@ -88,7 +89,7 @@ out.att.glasso <- glasso_autotune(X=X, alpha=0.02, thr=1e-4)
 (Sys.time()-start.T )
 ```
 
-    ## Time difference of 0.01970887 secs
+    ## Time difference of 0.02029681 secs
 
 ``` r
 round(out.att.glasso$Theta,4)
