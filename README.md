@@ -9,9 +9,14 @@ regularization parameters in graphical Lasso (GLASSO), enhancing both
 estimation accuracy and graph recovery by leveraging penalties. GLASSO
 estimates the precision matrix $\Theta$ of a Gaussian graphical model
 (GGM) by maximizing the $\ell_1$-penalized log-likelihood over the space
-of positive semi-definite matrices: $$
+of positive semi-definite matrices:
+<p>
+$$
     \hat{\Theta} \in \underset{\Theta \succeq 0}{\arg\max} \left\{ \log \det(\Theta) - \mathrm{trace}(S\Theta) - \lambda \|\Theta\|_1 \right\},
-$$ where $S = \frac{1}{n} \sum_{i=1}^n x_i x_i^\top$ is the sample
+$$
+</p>
+
+where $S = \frac{1}{n} \sum_{i=1}^n x_i x_i^\top$ is the sample
 covariance matrix and $\|\Theta\|_1$ denotes the elementwise $\ell_1$
 norm. The tuning parameter $\lambda \geq 0$ controls the sparsity of the
 estimate.
@@ -79,7 +84,7 @@ out.att.glasso <- glasso_autotune(X=X, alpha=0.02, thr=1e-4)
 (Sys.time()-start.T )
 ```
 
-    ## Time difference of 0.01940703 secs
+    ## Time difference of 0.0206871 secs
 
 ``` r
 round(out.att.glasso$Theta,4)
