@@ -1,5 +1,5 @@
 ---
-title: "ATTglasso"
+title: "AutotuneGLASSO: An Automatic Approach to Variable-Specific Tuning for Gaussian Graphical Models"
 output: github_document
   
 ---
@@ -8,11 +8,20 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Overview
+## Introduction
 
-`ATTglasso` is an R package that performs Autotune Graphical LASSO.
+We provide the `ATTglasso` package for automatic tuning of regularization parameters in graphical Lasso (GLASSO), enhancing both estimation accuracy and graph recovery by leveraging \emph{node-specific} penalties. GLASSO estimates the precision matrix $\Theta$ of a Gaussian graphical model (GGM) by maximizing the $\ell_1$-penalized log-likelihood over the space of positive semi-definite matrices:
+$$
+    \hat{\Theta} \in \underset{\Theta \succeq 0}{\arg\max} \left\{ \log \det(\Theta) - \mathrm{trace}(S\Theta) - \lambda \|\Theta\|_1 \right\},
+$$
+where $S = \frac{1}{n} \sum_{i=1}^n x_i x_i^\top$ is the sample covariance matrix and $\|\Theta\|_1$ denotes the elementwise $\ell_1$ norm. The tuning parameter $\lambda \geq 0$ controls the sparsity of the estimate.
+
+Unlike standard GLASSO, which relies on a single global penalty, `AutotuneGLASSO` adaptively learns a set of node-specific penalties $\lambda_j$. It does so by augmenting the nodewise Lasso regression step to jointly estimate both regression coefficients and error variances, allowing more flexible and data-driven regularization across nodes.
+
 
 ## Installation
+
+You can download the `ATTglasso` package from Github.
 
 ```{r, eval = FALSE}
 # You can install the development version from GitHub:
@@ -20,7 +29,9 @@ knitr::opts_chunk$set(echo = TRUE)
 devtools::install_github("hanguyen97/ATTglasso")
 ```
 
-## Usage
+## Quick Start: ATTglasso
+
+We create a data set for illustration:
 
 ```{r, message = FALSE}
 set.seed(1)
@@ -40,8 +51,11 @@ diag(Sigma)
 
 library(MASS)
 X <- mvrnorm(n=n, mu=rep(0,p), Sigma=Sigma)
+```
 
-# Run autotune GLASSO
+We can estimate the precision matrix using `glasso_autotune`.
+
+```{r}
 library(ATTglasso)
 start.T <- Sys.time()
 out.att.glasso <- glasso_autotune(X=X, alpha=0.02, thr=1e-4)

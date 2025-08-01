@@ -1,11 +1,30 @@
-ATTglasso
+AutotuneGLASSO: An Automatic Approach to Variable-Specific Tuning for
+Gaussian Graphical Models
 ================
 
-## Overview
+## Introduction
 
-`ATTglasso` is an R package that performs Autotune Graphical LASSO.
+We provide the `ATTglasso` package for automatic tuning of
+regularization parameters in graphical Lasso (GLASSO), enhancing both
+estimation accuracy and graph recovery by leveraging penalties. GLASSO
+estimates the precision matrix $\Theta$ of a Gaussian graphical model
+(GGM) by maximizing the $\ell_1$-penalized log-likelihood over the space
+of positive semi-definite matrices: $$
+    \hat{\Theta} \in \underset{\Theta \succeq 0}{\arg\max} \left\{ \log \det(\Theta) - \mathrm{trace}(S\Theta) - \lambda \|\Theta\|_1 \right\},
+$$ where $S = \frac{1}{n} \sum_{i=1}^n x_i x_i^\top$ is the sample
+covariance matrix and $\|\Theta\|_1$ denotes the elementwise $\ell_1$
+norm. The tuning parameter $\lambda \geq 0$ controls the sparsity of the
+estimate.
+
+Unlike standard GLASSO, which relies on a single global penalty,
+`AutotuneGLASSO` adaptively learns a set of node-specific penalties
+$\lambda_j$. It does so by augmenting the nodewise Lasso regression step
+to jointly estimate both regression coefficients and error variances,
+allowing more flexible and data-driven regularization across nodes.
 
 ## Installation
+
+You can download the `ATTglasso` package from Github.
 
 ``` r
 # You can install the development version from GitHub:
@@ -13,7 +32,9 @@ ATTglasso
 devtools::install_github("hanguyen97/ATTglasso")
 ```
 
-## Usage
+## Quick Start: ATTglasso
+
+We create a data set for illustration:
 
 ``` r
 set.seed(1)
@@ -38,32 +59,27 @@ diag(Sigma)
 ``` r
 library(MASS)
 X <- mvrnorm(n=n, mu=rep(0,p), Sigma=Sigma)
+```
 
-# Run autotune GLASSO
+We can estimate the precision matrix using `glasso_autotune`.
+
+``` r
 library(ATTglasso)
 start.T <- Sys.time()
 out.att.glasso <- glasso_autotune(X=X, alpha=0.02, thr=1e-4)
 ```
 
     ## glasso iter = 1; error = 1e+06
-    ## change in W.err = 999999
-    ## glasso iter = 2; error = 1.188
-    ## change in W.err = 1.17184
-    ## glasso iter = 3; error = 0.016
-    ## change in W.err = 0.0163259
-    ## glasso iter = 4; error = 0
-    ## change in W.err = 0.000113608
-    ## glasso iter = 5; error = 0
-    ## change in W.err = 1.95857e-06
-    ## glasso iter = 6; error = 0
-    ## change in W.err = 1.95824e-06
-    ## final glasso iter = 6
+    ## glasso iter = 2; error = 0.268
+    ## glasso iter = 3; error = 0.003
+    ## glasso iter = 4; error = 0.003
+    ## final glasso iter = 4
 
 ``` r
 (Sys.time()-start.T )
 ```
 
-    ## Time difference of 0.03056479 secs
+    ## Time difference of 0.01940703 secs
 
 ``` r
 round(out.att.glasso$Theta,4)
