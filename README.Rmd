@@ -55,6 +55,7 @@ library(MASS)
 X <- mvrnorm(n=n, mu=rep(0,p), Sigma=Sigma)
 ```
 
+
 We can estimate the precision matrix using `glasso_autotune`. $\alpha = 0.02$ denotes the significance level of the sequential F-test procedure used for edge selection at each nodewise Lasso regression step.
 
 ```{r}

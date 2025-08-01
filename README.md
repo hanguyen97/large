@@ -89,7 +89,7 @@ out.att.glasso <- glasso_autotune(X=X, alpha=0.02, thr=1e-4)
 (Sys.time()-start.T )
 ```
 
-    ## Time difference of 0.02029681 secs
+    ## Time difference of 0.02257705 secs
 
 ``` r
 round(out.att.glasso$Theta,4)
