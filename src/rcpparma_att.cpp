@@ -402,6 +402,7 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.02,
    }
    return List::create(Named("Theta") = Theta, 
                        Named("sigma2.hat") = sigma2_hat,
+                       Named("lambdas") = 0.5 * lambdav % sigma2_hat,
                        Named("niter") = niter,
                        Named("converged") = converged);
  }
