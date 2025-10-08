@@ -1,5 +1,4 @@
-AutotuneGLASSO: An Automatic Approach to Variable-Specific Tuning for
-Gaussian Graphical Models
+AutotuneGLASSO / LARGE: Locally Adaptive Regularization for Graph Estimation
 ================
 
 ## Introduction
