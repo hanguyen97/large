@@ -8,6 +8,7 @@ lasso_autotune(
   X_X,
   X_Y,
   r_XY,
+  lambdas,
   sigma2,
   n,
   s_22,
@@ -18,7 +19,8 @@ lasso_autotune(
   alpha,
   F_crit_values,
   lambda0 = -1,
-  verbose_i = FALSE
+  verbose_i = FALSE,
+  penalize_diag = FALSE
 )
 }
 \description{

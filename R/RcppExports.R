@@ -2,8 +2,8 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' Inner Loop using Autotune Lasso  
-lasso_autotune <- function(X_X, X_Y, r_XY, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0 = -1, verbose_i = FALSE) {
-    .Call(`_ATTglasso_lasso_autotune`, X_X, X_Y, r_XY, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0, verbose_i)
+lasso_autotune <- function(X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0 = -1, verbose_i = FALSE, penalize_diag = FALSE) {
+    .Call(`_ATTglasso_lasso_autotune`, X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0, verbose_i, penalize_diag)
 }
 
 #' Autotune Graphical Lasso 

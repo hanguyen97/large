@@ -88,12 +88,14 @@ double avg_offd_abs(const arma::mat& W) {
 //' Inner Loop using Autotune Lasso  
 // [[Rcpp::export]]
 List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::uvec& r_XY, 
+                    const arma::vec& lambdas, 
                      double sigma2, int n, double s_22, 
                      const arma::colvec& y, const arma::mat& Z, 
                      int node, int outer_iter, 
                      double alpha, const arma::vec& F_crit_values, 
                      double lambda0 = -1, 
-                     bool verbose_i = false) {
+                     bool verbose_i = false,
+                     bool penalize_diag = false) {
    
    int p = X_X.n_rows;
    int d = std::min(n-2, p);
@@ -108,6 +110,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
    std::vector<int> support_ss;
    std::vector<int> support_ss_old;
    std::vector<int> sel_b;
+   arma::vec lambdas_sub = arma::join_vert(lambdas.head(node), lambdas.tail(lambdas.n_elem-node-1));
    
    if (lambda0 == -1) {
      lambda0 = max(abs(X_Y)) * (1 / s_22);
@@ -132,7 +135,11 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
        if (abs(X_rj) < 0.5 * thresh) {
          b[j] = 0;
        } else {
-         b[j] = (abs(X_rj) - 0.5 * thresh) * ((X_rj > 0) ? 1 : -1) / X_X(j, j);
+         if (penalize_diag) {
+           b[j] = (abs(X_rj) - 0.5 * thresh) * ((X_rj > 0) ? 1 : -1) / (X_X(j, j) + lambdas_sub(j));
+         } else {
+           b[j] = (abs(X_rj) - 0.5 * thresh) * ((X_rj > 0) ? 1 : -1) / X_X(j, j);
+         }
        }
        
        X_r -= X_X.col(j) * b[j];
@@ -253,7 +260,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
    
    return List::create(Named("b")=b,
                        Named("sigma2")=sigma2,
-                       Named("lambda")=thresh);
+                       Named("thresh")=thresh);
  }
 
 
@@ -294,9 +301,11 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.02,
    bool valid_diag = true;
    int niter = -1;
    
-   double lambda_tmp = -1;
-   arma::vec lambdav(p);
-   lambdav.fill(-1);
+   double thresh = -1;
+   arma::vec lambdas(p);
+   lambdas.fill(-1);
+   arma::vec lambda0s(p);
+   lambda0s.fill(-1);
    arma::vec b_hat(p-1, fill::zeros);
    
    arma::mat W_old = W;
@@ -306,7 +315,7 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.02,
        arma::uvec idx = regspace<uvec>(0, p - 1);
        idx.shed_row(j);
        arma::colvec s_12 = S.submat(idx, uvec{(unsigned int)j});
-       W(j, j) = W(j, j) + 0.5 * max(abs(s_12)) ;
+       lambdas(j) = 0.5 * max(abs(s_12)) ;
      }
    }
    
@@ -330,23 +339,31 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.02,
        // std::cout << "Test: " << R_sorted_idx[j].size() << std::endl;
        
        List fitted = lasso_autotune(W_11, s_12, R_sorted_idx[j],
-                                    sigma2_hat(j), n, s_22, 
+                                    lambdas, sigma2_hat(j), 
+                                    n, s_22, 
                                     X.col(j), X.cols(idx), 
                                     j, iter, alpha, F_crit_values,
-                                    lambdav(j), verbose_i);
+                                    lambda0s(j), 
+                                    verbose_i, penalize_diag);
        
        b_hat = as<arma::vec>(fitted["b"]);
        sigma2_hat(j) = fitted["sigma2"];
-       lambda_tmp = fitted["lambda"];
-       lambdav(j) = lambda_tmp / sigma2_hat(j);
+       thresh = fitted["thresh"];
+       lambda0s(j) = thresh / sigma2_hat(j);
+       lambdas(j) = 0.5 * thresh;
        
-       arma::mat Wsub = W_11 * b_hat;
+       arma::vec lambdas_sub = arma::join_vert(lambdas.head(j), lambdas.tail(lambdas.n_elem-j-1));
+       arma::mat Wsub = (W_11 + arma::diagmat(lambdas_sub)) * b_hat;
        W.submat(idx, uvec{(unsigned int)j}) = Wsub;
        W.submat(uvec{(unsigned int)j}, idx) = trans(Wsub);
        
        if (final_cycle) {
          // Theta(j, j) = 1.0 / (W(j, j) - 0.5*max(abs(s_12)) - dot(W.submat(idx, uvec{(unsigned int)j}), b_hat));
-         Theta(j, j) = 1.0 / sigma2_hat(j);
+         if (penalize_diag) {
+           Theta(j, j) = 1.0 / (sigma2_hat(j)+lambdas(j));
+         } else {
+           Theta(j, j) = 1.0 / sigma2_hat(j);
+         }
          arma::mat Thetasub = -Theta(j, j) * b_hat;
          Theta.submat(idx, uvec{(unsigned int)j}) = Thetasub;
          Theta.submat(uvec{(unsigned int)j}, idx) = trans(Thetasub);
@@ -403,7 +420,7 @@ List glasso_autotune(const arma::mat& X, double alpha = 0.02,
    }
    return List::create(Named("Theta") = Theta, 
                        Named("sigma2.hat") = sigma2_hat,
-                       Named("lambdas") = 0.5 * lambdav % sigma2_hat,
+                       Named("lambdas") = lambdas,
                        Named("niter") = niter,
                        Named("converged") = converged);
  }
