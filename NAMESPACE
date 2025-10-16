@@ -1,3 +1,3 @@
-useDynLib(ATTglasso, .registration=TRUE)
+useDynLib(large, .registration=TRUE)
 importFrom(Rcpp, evalCpp)
 exportPattern("^[[:alpha:]]+")

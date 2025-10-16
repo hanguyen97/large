@@ -1,24 +1,24 @@
-\name{ATTglasso-package}
-\alias{ATTglasso-package}
-\alias{ATTglasso}
+\name{large-package}
+\alias{large-package}
+\alias{large}
 \docType{package}
 \title{
-\packageTitle{ATTglasso}
+\packageTitle{large}
 }
 \description{
-\packageDescription{ATTglasso}
+\packageDescription{large}
 }
 \details{
 
 The DESCRIPTION file:
-\packageDESCRIPTION{ATTglasso}
-\packageIndices{ATTglasso}
+\packageDESCRIPTION{large}
+\packageIndices{large}
 ~~ An overview of how to use the package, including the most important functions ~~
 }
 \author{
-\packageAuthor{ATTglasso}
+\packageAuthor{large}
 
-Maintainer: \packageMaintainer{ATTglasso}
+Maintainer: \packageMaintainer{large}
 }
 \references{
 ~~ Literature or other references for background information ~~

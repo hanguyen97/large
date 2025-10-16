@@ -1,10 +1,10 @@
-Package: ATTglasso
+Package: large
 Type: Package
 Title: What the package does (short line)
 Version: 1.0
 Date: 2025-03-24
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
+Author: Ha Nguyen
+Maintainer: <tn325@cornell.edu>
 Description: More about what it does (maybe more than one line)
 License: What license is it under?
 Imports: Rcpp (>= 1.0.14)

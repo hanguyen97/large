@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // lasso_autotune
 List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::uvec& r_XY, const arma::vec& lambdas, double sigma2, int n, double s_22, const arma::colvec& y, const arma::mat& Z, int node, int outer_iter, double alpha, const arma::vec& F_crit_values, double lambda0, bool verbose_i, bool penalize_diag);
-RcppExport SEXP _ATTglasso_lasso_autotune(SEXP X_XSEXP, SEXP X_YSEXP, SEXP r_XYSEXP, SEXP lambdasSEXP, SEXP sigma2SEXP, SEXP nSEXP, SEXP s_22SEXP, SEXP ySEXP, SEXP ZSEXP, SEXP nodeSEXP, SEXP outer_iterSEXP, SEXP alphaSEXP, SEXP F_crit_valuesSEXP, SEXP lambda0SEXP, SEXP verbose_iSEXP, SEXP penalize_diagSEXP) {
+RcppExport SEXP _large_lasso_autotune(SEXP X_XSEXP, SEXP X_YSEXP, SEXP r_XYSEXP, SEXP lambdasSEXP, SEXP sigma2SEXP, SEXP nSEXP, SEXP s_22SEXP, SEXP ySEXP, SEXP ZSEXP, SEXP nodeSEXP, SEXP outer_iterSEXP, SEXP alphaSEXP, SEXP F_crit_valuesSEXP, SEXP lambda0SEXP, SEXP verbose_iSEXP, SEXP penalize_diagSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -37,9 +37,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// glasso_autotune
-List glasso_autotune(const arma::mat& X, double alpha, double penalize_diag, double thr, int maxit, bool verbose, bool verbose_i);
-RcppExport SEXP _ATTglasso_glasso_autotune(SEXP XSEXP, SEXP alphaSEXP, SEXP penalize_diagSEXP, SEXP thrSEXP, SEXP maxitSEXP, SEXP verboseSEXP, SEXP verbose_iSEXP) {
+// large
+List large(const arma::mat& X, double alpha, double penalize_diag, double thr, int maxit, bool verbose, bool verbose_i);
+RcppExport SEXP _large_large(SEXP XSEXP, SEXP alphaSEXP, SEXP penalize_diagSEXP, SEXP thrSEXP, SEXP maxitSEXP, SEXP verboseSEXP, SEXP verbose_iSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -50,18 +50,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose_i(verbose_iSEXP);
-    rcpp_result_gen = Rcpp::wrap(glasso_autotune(X, alpha, penalize_diag, thr, maxit, verbose, verbose_i));
+    rcpp_result_gen = Rcpp::wrap(large(X, alpha, penalize_diag, thr, maxit, verbose, verbose_i));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_ATTglasso_lasso_autotune", (DL_FUNC) &_ATTglasso_lasso_autotune, 16},
-    {"_ATTglasso_glasso_autotune", (DL_FUNC) &_ATTglasso_glasso_autotune, 7},
+    {"_large_lasso_autotune", (DL_FUNC) &_large_lasso_autotune, 16},
+    {"_large_large", (DL_FUNC) &_large_large, 7},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_ATTglasso(DllInfo *dll) {
+RcppExport void R_init_large(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

@@ -1,5 +1,5 @@
 ---
-title: "AutotuneGLASSO: An Automatic Approach to Variable-Specific Tuning for Gaussian Graphical Models"
+title: "LARGE: Locally Adaptive Regularization for Graph Estimation"
 output: github_document
   
 ---
@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
-We provide the `ATTglasso` package for automatic tuning of regularization parameters in graphical Lasso (GLASSO), enhancing both estimation accuracy and graph recovery by leveraging \emph{node-specific} penalties. Given $n$ i.i.d. observations of $X \sim N_p(0, \Theta^{-1})$, GLASSO estimates the precision matrix $\Theta$ of a Gaussian graphical model (GGM) by maximizing the $\ell_1$-penalized log-likelihood over the space of positive semi-definite matrices:
+We provide the `large` package for automatic tuning of regularization parameters in graphical Lasso (GLASSO), enhancing both estimation accuracy and graph recovery by leveraging \emph{node-specific} penalties. Given $n$ i.i.d. observations of $X \sim N_p(0, \Theta^{-1})$, GLASSO estimates the precision matrix $\Theta$ of a Gaussian graphical model (GGM) by maximizing the $\ell_1$-penalized log-likelihood over the space of positive semi-definite matrices:
 <p>
 $$
     \hat{\Theta} \in \underset{\Theta \succeq 0}{\arg\max} \left\{ \log \det(\Theta) - \mathrm{trace}(S\Theta) - \lambda \|\Theta\|_1 \right\},
@@ -18,20 +18,20 @@ $$
 </p> 
 where $S = \frac{1}{n} \sum_{i=1}^n x_i x_i^\top$ is the sample covariance matrix and $\|\Theta\|_1$ denotes the elementwise $\ell_1$ norm. The tuning parameter $\lambda \geq 0$ controls the sparsity of the estimate.
 
-Unlike standard GLASSO, which relies on a single global penalty, `AutotuneGLASSO` adaptively learns a set of node-specific penalties $\lambda_j, j = 1, \ldots, p$. It does so by augmenting the nodewise Lasso regression step to jointly estimate both regression coefficients and error variances, allowing more flexible and data-driven regularization across nodes.
+Unlike standard GLASSO, which relies on a single global penalty, `large` adaptively learns a set of node-specific penalties $\lambda_j, j = 1, \ldots, p$. It does so by augmenting the nodewise Lasso regression step to jointly estimate both regression coefficients and error variances, allowing more flexible and data-driven regularization across nodes.
 
 
 ## Installation
 
-You can download the `ATTglasso` package from Github.
+You can download the `large` package from Github.
 
 ```{r, eval = FALSE}
 # You can install the development version from GitHub:
 # install.packages("devtools")
-devtools::install_github("hanguyen97/ATTglasso")
+# devtools::install_github("hanguyen97/large")
 ```
 
-## Quick Start: ATTglasso
+## Quick Start: 
 
 We create a data set for illustration:
 
@@ -56,13 +56,13 @@ X <- mvrnorm(n=n, mu=rep(0,p), Sigma=Sigma)
 ```
 
 
-We can estimate the precision matrix using `glasso_autotune`. $\alpha = 0.02$ denotes the significance level of the sequential F-test procedure used for edge selection at each nodewise Lasso regression step.
+We can estimate the precision matrix using `large`. $\alpha = 0.02$ denotes the significance level of the sequential F-test procedure used for edge selection at each nodewise Lasso regression step.
 
 ```{r}
-library(ATTglasso)
+library(large)
 start.T <- Sys.time()
-out.att.glasso <- glasso_autotune(X=X, alpha=0.02, thr=1e-4)
+out <- large(X=X, alpha=0.02, thr=1e-4)
 (Sys.time()-start.T )
 
-round(out.att.glasso$Theta,4)
+round(out$Theta,4)
 ```

@@ -272,7 +272,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
 //' @param maxit Maximum number of iterations of outer loop. Default 100.
 //' @return Estimated precision matrix
 // [[Rcpp::export]]
-List glasso_autotune(const arma::mat& X, double alpha = 0.02, 
+List large(const arma::mat& X, double alpha = 0.02, 
                       double penalize_diag = false,
                       double thr = 0.05, int maxit = 50, 
                       bool verbose = true, bool verbose_i = false) {

@@ -1,15 +1,15 @@
-AutotuneGLASSO / LARGE: Locally Adaptive Regularization for Graph Estimation
+LARGE: Locally Adaptive Regularization for Graph Estimation
 ================
 
 ## Introduction
 
-We provide the `ATTglasso` package for automatic tuning of
-regularization parameters in graphical Lasso (GLASSO), enhancing both
-estimation accuracy and graph recovery by leveraging penalties. Given
-$n$ i.i.d. observations of $X \sim N_p(0, \Theta^{-1})$, GLASSO
-estimates the precision matrix $\Theta$ of a Gaussian graphical model
-(GGM) by maximizing the $\ell_1$-penalized log-likelihood over the space
-of positive semi-definite matrices:
+We provide the `large` package for automatic tuning of regularization
+parameters in graphical Lasso (GLASSO), enhancing both estimation
+accuracy and graph recovery by leveraging penalties. Given $n$ i.i.d.
+observations of $X \sim N_p(0, \Theta^{-1})$, GLASSO estimates the
+precision matrix $\Theta$ of a Gaussian graphical model (GGM) by
+maximizing the $\ell_1$-penalized log-likelihood over the space of
+positive semi-definite matrices:
 <p>
 $$
     \hat{\Theta} \in \underset{\Theta \succeq 0}{\arg\max} \left\{ \log \det(\Theta) - \mathrm{trace}(S\Theta) - \lambda \|\Theta\|_1 \right\},
@@ -21,8 +21,8 @@ covariance matrix and $\|\Theta\|_1$ denotes the elementwise $\ell_1$
 norm. The tuning parameter $\lambda \geq 0$ controls the sparsity of the
 estimate.
 
-Unlike standard GLASSO, which relies on a single global penalty,
-`AutotuneGLASSO` adaptively learns a set of node-specific penalties
+Unlike standard GLASSO, which relies on a single global penalty, `large`
+adaptively learns a set of node-specific penalties
 $\lambda_j, j = 1, \ldots, p$. It does so by augmenting the nodewise
 Lasso regression step to jointly estimate both regression coefficients
 and error variances, allowing more flexible and data-driven
@@ -30,15 +30,15 @@ regularization across nodes.
 
 ## Installation
 
-You can download the `ATTglasso` package from Github.
+You can download the `large` package from Github.
 
 ``` r
 # You can install the development version from GitHub:
 # install.packages("devtools")
-devtools::install_github("hanguyen97/ATTglasso")
+# devtools::install_github("hanguyen97/large")
 ```
 
-## Quick Start: ATTglasso
+## Quick Start:
 
 We create a data set for illustration:
 
@@ -67,41 +67,40 @@ library(MASS)
 X <- mvrnorm(n=n, mu=rep(0,p), Sigma=Sigma)
 ```
 
-We can estimate the precision matrix using `glasso_autotune`.
-$\alpha = 0.02$ denotes the significance level of the sequential F-test
-procedure used for edge selection at each nodewise Lasso regression
-step.
+We can estimate the precision matrix using `large`. $\alpha = 0.02$
+denotes the significance level of the sequential F-test procedure used
+for edge selection at each nodewise Lasso regression step.
 
 ``` r
-library(ATTglasso)
+library(large)
 start.T <- Sys.time()
-out.att.glasso <- glasso_autotune(X=X, alpha=0.02, thr=1e-4)
+out <- large(X=X, alpha=0.02, thr=1e-4)
 ```
 
     ## glasso iter = 1; error = 1e+06
-    ## glasso iter = 2; error = 0.268
-    ## glasso iter = 3; error = 0.003
-    ## glasso iter = 4; error = 0.003
+    ## glasso iter = 2; error = 0.201
+    ## glasso iter = 3; error = 0.005
+    ## glasso iter = 4; error = 0.005
     ## final glasso iter = 4
 
 ``` r
 (Sys.time()-start.T )
 ```
 
-    ## Time difference of 0.02257705 secs
+    ## Time difference of 0.01976085 secs
 
 ``` r
-round(out.att.glasso$Theta,4)
+round(out$Theta,4)
 ```
 
     ##         [,1]   [,2]   [,3]   [,4]   [,5]   [,6]   [,7]   [,8]   [,9]  [,10]
-    ##  [1,] 0.7329 0.1153 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000
-    ##  [2,] 0.1153 0.6474 0.0933 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000
-    ##  [3,] 0.0000 0.0933 0.6348 0.0892 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000
-    ##  [4,] 0.0000 0.0000 0.0892 0.7712 0.1050 0.0000 0.0000 0.0000 0.0000 0.0000
-    ##  [5,] 0.0000 0.0000 0.0000 0.1050 0.7860 0.0724 0.0000 0.0000 0.0000 0.0000
-    ##  [6,] 0.0000 0.0000 0.0000 0.0000 0.0724 0.6977 0.0834 0.0000 0.0000 0.0000
-    ##  [7,] 0.0000 0.0000 0.0000 0.0000 0.0000 0.0834 0.6626 0.1159 0.0000 0.0000
-    ##  [8,] 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.1159 0.6550 0.0345 0.0000
-    ##  [9,] 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0345 0.6537 0.1196
-    ## [10,] 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.1196 0.7490
+    ##  [1,] 0.9501 0.1784 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000
+    ##  [2,] 0.1784 0.8542 0.1386 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000
+    ##  [3,] 0.0000 0.1386 0.8217 0.1294 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000
+    ##  [4,] 0.0000 0.0000 0.1294 0.9799 0.1507 0.0000 0.0000 0.0000 0.0000 0.0000
+    ##  [5,] 0.0000 0.0000 0.0000 0.1507 0.9906 0.1051 0.0000 0.0000 0.0000 0.0000
+    ##  [6,] 0.0000 0.0000 0.0000 0.0000 0.1051 0.8989 0.1324 0.0000 0.0000 0.0000
+    ##  [7,] 0.0000 0.0000 0.0000 0.0000 0.0000 0.1324 0.9346 0.1860 0.0000 0.0000
+    ##  [8,] 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.1860 0.8923 0.0534 0.0000
+    ##  [9,] 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0534 0.8687 0.1847
+    ## [10,] 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 0.1847 0.9928

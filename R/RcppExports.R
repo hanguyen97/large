@@ -3,7 +3,7 @@
 
 #' Inner Loop using Autotune Lasso  
 lasso_autotune <- function(X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0 = -1, verbose_i = FALSE, penalize_diag = FALSE) {
-    .Call(`_ATTglasso_lasso_autotune`, X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0, verbose_i, penalize_diag)
+    .Call(`_large_lasso_autotune`, X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0, verbose_i, penalize_diag)
 }
 
 #' Autotune Graphical Lasso 
@@ -13,7 +13,7 @@ lasso_autotune <- function(X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node,
 #' @param thr Threshold for convergence. Default value is 1e-4. Iterations stop when average absolute parameter change is less than thr * ave(abs(offdiag(s)))
 #' @param maxit Maximum number of iterations of outer loop. Default 100.
 #' @return Estimated precision matrix
-glasso_autotune <- function(X, alpha = 0.02, penalize_diag = FALSE, thr = 0.05, maxit = 50L, verbose = TRUE, verbose_i = FALSE) {
-    .Call(`_ATTglasso_glasso_autotune`, X, alpha, penalize_diag, thr, maxit, verbose, verbose_i)
+large <- function(X, alpha = 0.02, penalize_diag = FALSE, thr = 0.05, maxit = 50L, verbose = TRUE, verbose_i = FALSE) {
+    .Call(`_large_large`, X, alpha, penalize_diag, thr, maxit, verbose, verbose_i)
 }
 
