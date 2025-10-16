@@ -37,9 +37,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// large
-List large(const arma::mat& X, double alpha, double penalize_diag, double thr, int maxit, bool verbose, bool verbose_i);
-RcppExport SEXP _large_large(SEXP XSEXP, SEXP alphaSEXP, SEXP penalize_diagSEXP, SEXP thrSEXP, SEXP maxitSEXP, SEXP verboseSEXP, SEXP verbose_iSEXP) {
+// fit_large
+List fit_large(const arma::mat& X, double alpha, double penalize_diag, double thr, int maxit, bool verbose);
+RcppExport SEXP _large_fit_large(SEXP XSEXP, SEXP alphaSEXP, SEXP penalize_diagSEXP, SEXP thrSEXP, SEXP maxitSEXP, SEXP verboseSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -49,15 +49,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type thr(thrSEXP);
     Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose_i(verbose_iSEXP);
-    rcpp_result_gen = Rcpp::wrap(large(X, alpha, penalize_diag, thr, maxit, verbose, verbose_i));
+    rcpp_result_gen = Rcpp::wrap(fit_large(X, alpha, penalize_diag, thr, maxit, verbose));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_large_lasso_autotune", (DL_FUNC) &_large_lasso_autotune, 16},
-    {"_large_large", (DL_FUNC) &_large_large, 7},
+    {"_large_fit_large", (DL_FUNC) &_large_fit_large, 6},
     {NULL, NULL, 0}
 };
 

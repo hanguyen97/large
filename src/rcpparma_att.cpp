@@ -264,22 +264,39 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
  }
 
 
-//' Autotune Graphical Lasso 
-//'
-//' @param X Data matrix 
-//' @param alpha alpha value of F test. Default value is 0.02.
-//' @param thr Threshold for convergence. Default value is 1e-4. Iterations stop when average absolute parameter change is less than thr * ave(abs(offdiag(s)))
-//' @param maxit Maximum number of iterations of outer loop. Default 100.
-//' @return Estimated precision matrix
+//' Locally Adaptive Regularization for Graph Estimation
+//' 
+//' Estimates a sparse inverse covariance matrix using a lasso (L1) penalty
+//' with locally adaptive regularization
+//' 
+//' @param X A numeric data matrix
+//' @param alpha Significance level of the F-test used to determine nodewise regularization. 
+//'   Default is 0.02.
+//' @param penalize_diag Logical; whether to penalize diagonal entries of the precision matrix. 
+//'   Default is \code{FALSE}.
+//' @param thr Convergence threshold. Default is 0.05.
+//' @param maxit Maximum number of iterations for the outer loop. Default is 20.
+//' @param verbose Logical; if \code{TRUE}, print overall iteration progress. Default is \code{TRUE}.
+//' 
+//' @return
+//' \itemize{
+//'   \item \code{Theta}: Estimated precision matrix.
+//'   \item \code{sigma2.hat}: Estimated residual variances from nodewise regressions.
+//'   \item \code{lambdas}: Vector of adaptively selected regularization parameters for each node.
+//'   \item \code{niter}: Number of outer iterations performed.
+//'   \item \code{converged}: Logical indicating whether the algorithm converged.
+//' }
+//' 
 // [[Rcpp::export]]
-List large(const arma::mat& X, double alpha = 0.02, 
+List fit_large(const arma::mat& X, double alpha = 0.02, 
                       double penalize_diag = false,
-                      double thr = 0.05, int maxit = 50, 
-                      bool verbose = true, bool verbose_i = false) {
+                      double thr = 0.05, int maxit = 20, 
+                      bool verbose = true) {
    
    int n = X.n_rows;
    int p = X.n_cols;
-   
+   bool verbose_i = false;
+     
    Rcpp::Function qf("qf");
    // Prevent non-positive df2 of F-test
    int d = std::min(n-2, p-1);

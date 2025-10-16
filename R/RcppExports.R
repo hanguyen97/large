@@ -6,14 +6,30 @@ lasso_autotune <- function(X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node,
     .Call(`_large_lasso_autotune`, X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0, verbose_i, penalize_diag)
 }
 
-#' Autotune Graphical Lasso 
-#'
-#' @param X Data matrix 
-#' @param alpha alpha value of F test. Default value is 0.02.
-#' @param thr Threshold for convergence. Default value is 1e-4. Iterations stop when average absolute parameter change is less than thr * ave(abs(offdiag(s)))
-#' @param maxit Maximum number of iterations of outer loop. Default 100.
-#' @return Estimated precision matrix
-large <- function(X, alpha = 0.02, penalize_diag = FALSE, thr = 0.05, maxit = 50L, verbose = TRUE, verbose_i = FALSE) {
-    .Call(`_large_large`, X, alpha, penalize_diag, thr, maxit, verbose, verbose_i)
+#' Locally Adaptive Regularization for Graph Estimation
+#' 
+#' Estimates a sparse inverse covariance matrix using a lasso (L1) penalty
+#' with locally adaptive regularization
+#' 
+#' @param X A numeric data matrix
+#' @param alpha Significance level of the F-test used to determine nodewise regularization. 
+#'   Default is 0.02.
+#' @param penalize_diag Logical; whether to penalize diagonal entries of the precision matrix. 
+#'   Default is \code{FALSE}.
+#' @param thr Convergence threshold. Default is 0.05.
+#' @param maxit Maximum number of iterations for the outer loop. Default is 20.
+#' @param verbose Logical; if \code{TRUE}, print overall iteration progress. Default is \code{TRUE}.
+#' 
+#' @return
+#' \itemize{
+#'   \item \code{Theta}: Estimated precision matrix.
+#'   \item \code{sigma2.hat}: Estimated residual variances from nodewise regressions.
+#'   \item \code{lambdas}: Vector of adaptively selected regularization parameters for each node.
+#'   \item \code{niter}: Number of outer iterations performed.
+#'   \item \code{converged}: Logical indicating whether the algorithm converged.
+#' }
+#' 
+fit_large <- function(X, alpha = 0.02, penalize_diag = FALSE, thr = 0.05, maxit = 20L, verbose = TRUE) {
+    .Call(`_large_fit_large`, X, alpha, penalize_diag, thr, maxit, verbose)
 }
 

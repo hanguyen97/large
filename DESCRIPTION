@@ -1,11 +1,11 @@
 Package: large
 Type: Package
-Title: What the package does (short line)
+Title: Locally Adaptive Regularization for Graph Estimation
 Version: 1.0
 Date: 2025-03-24
 Author: Ha Nguyen
 Maintainer: <tn325@cornell.edu>
-Description: More about what it does (maybe more than one line)
+Description: An automatic approach to nodewise, adaptive tuning selection for Gaussian graphical models
 License: What license is it under?
 Imports: Rcpp (>= 1.0.14)
 LinkingTo: Rcpp, RcppArmadillo

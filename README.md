@@ -74,7 +74,7 @@ for edge selection at each nodewise Lasso regression step.
 ``` r
 library(large)
 start.T <- Sys.time()
-out <- large(X=X, alpha=0.02, thr=1e-4)
+out <- fit_large(X=X, alpha=0.02, thr=1e-4)
 ```
 
     ## glasso iter = 1; error = 1e+06
@@ -87,7 +87,7 @@ out <- large(X=X, alpha=0.02, thr=1e-4)
 (Sys.time()-start.T )
 ```
 
-    ## Time difference of 0.01976085 secs
+    ## Time difference of 0.01952505 secs
 
 ``` r
 round(out$Theta,4)

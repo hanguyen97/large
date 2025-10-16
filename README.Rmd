@@ -61,7 +61,7 @@ We can estimate the precision matrix using `large`. $\alpha = 0.02$ denotes the 
 ```{r}
 library(large)
 start.T <- Sys.time()
-out <- large(X=X, alpha=0.02, thr=1e-4)
+out <- fit_large(X=X, alpha=0.02, thr=1e-4)
 (Sys.time()-start.T )
 
 round(out$Theta,4)
