@@ -15,8 +15,7 @@ $$
 </p>
 
 where $S = \frac{1}{n} \sum_{i=1}^n X_i X_i^\top$ is the sample
-covariance matrix, and
-$\|\Theta_{\cdot j}\|_{1, \mathrm{off}} = \sum_{k \ne j} |\Theta_{kj}|$.
+covariance matrix..
 
 Unlike standard GLASSO, which relies on a single global penalty, LARGE
 adaptively learns a set of nodewise penalties
@@ -84,7 +83,7 @@ out <- fit_large(X=X, alpha=0.02, thr=1e-4)
 (Sys.time()-start.T )
 ```
 
-    ## Time difference of 0.01915598 secs
+    ## Time difference of 0.01953101 secs
 
 ``` r
 round(out$Theta,4)
