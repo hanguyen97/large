@@ -110,7 +110,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
    arma::vec lambdas_sub = arma::join_vert(lambdas.head(node), lambdas.tail(lambdas.n_elem-node-1));
    
    if (lambda0 == -1) {
-     lambda0 = max(abs(X_Y)) * (1 / s_22);
+     lambda0 = 0.5 * max(abs(X_Y)) * (1 / s_22);
    }
    
    for (int iter = 0; iter <= 1000; iter++) {
@@ -124,13 +124,13 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
        X_r += X_X.col(j) * b[j];
        double X_rj = X_r[j];
        
-       if (abs(X_rj) < 0.5 * thresh) {
+       if (abs(X_rj) < thresh) {
          b[j] = 0;
        } else {
          if (penalize_diag) {
-           b[j] = (abs(X_rj) - 0.5 * thresh) * ((X_rj > 0) ? 1 : -1) / (X_X(j, j) + lambdas_sub(j));
+           b[j] = (abs(X_rj) - thresh) * ((X_rj > 0) ? 1 : -1) / (X_X(j, j) + lambdas_sub(j));
          } else {
-           b[j] = (abs(X_rj) - 0.5 * thresh) * ((X_rj > 0) ? 1 : -1) / X_X(j, j);
+           b[j] = (abs(X_rj) - thresh) * ((X_rj > 0) ? 1 : -1) / X_X(j, j);
          }
        }
        
@@ -316,7 +316,7 @@ List fit_large(const arma::mat& X, double alpha = 0.02,
        sigma2_hat(j) = fitted["sigma2"];
        thresh = fitted["thresh"];
        lambda0s(j) = thresh / sigma2_hat(j);
-       lambdas(j) = 0.5 * thresh;
+       lambdas(j) = thresh;
        
        arma::vec lambdas_sub = arma::join_vert(lambdas.head(j), lambdas.tail(lambdas.n_elem-j-1));
        arma::mat Wsub = (W_11 + arma::diagmat(lambdas_sub)) * b_hat;
