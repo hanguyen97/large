@@ -3,26 +3,23 @@ LARGE: Locally Adaptive Regularization for Graph Estimation
 
 ## Introduction
 
-We provide the `large` package for automatic tuning of regularization
-parameters in graphical Lasso (GLASSO), enhancing both estimation
-accuracy and graph recovery by leveraging penalties. Given $n$ i.i.d.
-observations of $X \sim N_p(0, \Theta^{-1})$, GLASSO estimates the
-precision matrix $\Theta$ of a Gaussian graphical model (GGM) by
-maximizing the $\ell_1$-penalized log-likelihood over the space of
-positive semi-definite matrices:
+We provide the `large` package for learning adaptive tuning parameters
+in graph estimation. Given $n$ i.i.d. observations of
+$X \sim N_p(0, \Theta^{-1})$, LARGE estimates the precision matrix
+$\Theta$ of a Gaussian graphical model (GGM) by maximizing the
+$\ell_1$-penalized log-likelihood with column-wise penalties:
 <p>
 $$
-    \hat{\Theta} \in \underset{\Theta \succeq 0}{\arg\max} \left\{ \log \det(\Theta) - \mathrm{trace}(S\Theta) - \lambda \|\Theta\|_1 \right\},
+    \hat{\Theta}_{\mathrm{LARGE}} = \underset{\Theta \succeq 0}{\arg\max} \left\{ \log \det(\Theta) - \mathrm{trace}(S\Theta) - \sum_{j=1}^p \lambda_j \|\Theta_{\cdot j}\|_{1, \mathrm{off}} \right\},
 $$
 </p>
 
-where $S = \frac{1}{n} \sum_{i=1}^n x_i x_i^\top$ is the sample
-covariance matrix and $\|\Theta\|_1$ denotes the elementwise $\ell_1$
-norm. The tuning parameter $\lambda \geq 0$ controls the sparsity of the
-estimate.
+where $S = \frac{1}{n} \sum_{i=1}^n X_i X_i^\top$ is the sample
+covariance matrix, and
+$\|\Theta_{\cdot j}\|_{1, \mathrm{off}} = \sum_{k \ne j} |\Theta_{kj}|$.
 
-Unlike standard GLASSO, which relies on a single global penalty, `large`
-adaptively learns a set of node-specific penalties
+Unlike standard GLASSO, which relies on a single global penalty, LARGE
+adaptively learns a set of nodewise penalties
 $\lambda_j, j = 1, \ldots, p$. It does so by augmenting the nodewise
 Lasso regression step to jointly estimate both regression coefficients
 and error variances, allowing more flexible and data-driven
@@ -35,7 +32,7 @@ You can download the `large` package from Github.
 ``` r
 # You can install the development version from GitHub:
 # install.packages("devtools")
-# devtools::install_github("hanguyen97/large")
+devtools::install_github("hanguyen97/large")
 ```
 
 ## Quick Start:
@@ -87,7 +84,7 @@ out <- fit_large(X=X, alpha=0.02, thr=1e-4)
 (Sys.time()-start.T )
 ```
 
-    ## Time difference of 0.01952505 secs
+    ## Time difference of 0.02410007 secs
 
 ``` r
 round(out$Theta,4)
