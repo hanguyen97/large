@@ -106,6 +106,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
    double sel_sigma2 = var(y);
    double sigma2_old = 1e6;
    bool F_test = true;
+   bool sis = true;
    double thresh = -1;
    std::vector<int> support_ss;
    std::vector<int> support_ss_old;
@@ -153,7 +154,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
      if (F_test) {
        arma::uvec sorted_sd_idx;
        // sorted_sd_idx = sort_index(sd_r, "descend");
-       if (iter == 0) {
+       if (sis == true and iter == 0) {
          sorted_sd_idx = r_XY;
        } else {
          // sorted_sd_idx = sort_index(sd_r, "descend");
@@ -185,7 +186,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
          sd_r[max_idx] = -1;
          
          arma::uword j_idx;
-         if (iter == 0) {
+         if (sis == true and iter == 0) {
            // int j_idx = sorted_sd_idx[j];
            j_idx = sorted_sd_idx[j];
          } else {
