@@ -74,17 +74,17 @@ start.T <- Sys.time()
 out <- fit_large(X=X, alpha=0.02, thr=1e-4)
 ```
 
-    ## glasso iter = 1; error = 1e+06
-    ## glasso iter = 2; error = 0.201
-    ## glasso iter = 3; error = 0.005
-    ## glasso iter = 4; error = 0.005
-    ## final glasso iter = 4
+    ## iter = 1; relative F-norm change = 1e+06
+    ## iter = 2; relative F-norm change = 0.201
+    ## iter = 3; relative F-norm change = 0.005
+    ## iter = 4; relative F-norm change = 0.005
+    ## final iter = 4
 
 ``` r
 (Sys.time()-start.T )
 ```
 
-    ## Time difference of 0.02410007 secs
+    ## Time difference of 0.01915598 secs
 
 ``` r
 round(out$Theta,4)
