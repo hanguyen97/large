@@ -148,11 +148,6 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
          sd_r[j] = sqrt(as_scalar(pr.t() * pr) / n);
        }
        
-       arma::uvec sorted_sd_idx;
-       if (sis == true and iter == 0) {
-         sorted_sd_idx = r_XY;
-       } 
-       
        std::vector<int> sel_b;
        std::vector<int> new_b = sel_b;
        sel_sigma2 = var(y);
@@ -163,7 +158,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
          // Set sigma2 to sigma2 ols 
          sigma2 = sel_sigma2;
          
-         // Find index of the maximum element
+         // Instead of sorting, find index with max SD
          auto max_it = std::max_element(sd_r.begin(), sd_r.end());
          int max_idx = std::distance(sd_r.begin(), max_it);
          // Set the maximum element to -1
@@ -171,7 +166,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
          
          arma::uword j_idx;
          if (sis == true and iter == 0) {
-           j_idx = sorted_sd_idx[j];
+           j_idx = r_XY[j];
          } else {
            j_idx = max_idx;
          }
