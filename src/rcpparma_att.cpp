@@ -142,28 +142,41 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
      
      
      if (F_test) {
+       // ---------------------------------------- // 
        // ------------- Sigma update ------------- //
+       // ---------------------------------------- // 
+       
+       // get SD of partial residual and sort 
        for (int j = 0; j < p; j++) {
          arma::colvec pr = y - Z.cols(find(linspace<uvec>(0, p - 1, p) != j)) * b(find(linspace<uvec>(0, p - 1, p) != j));
          sd_r[j] = sqrt(as_scalar(pr.t() * pr) / n);
        }
-       
+       arma::uvec pred_ranking;
+       if (sis == true and iter == 0) {
+         pred_ranking = r_XY;
+       } else {
+         pred_ranking = arma::sort_index(sd_r, "descend");
+       }
+
+       // initialize sigma update variables
        std::vector<int> sel_b;
        std::vector<int> new_b = sel_b;
        sel_sigma2 = var(y);
-       
        arma::uvec sel_idx;
-       // Sequential F test for variable selection
+       arma::colvec y_temp = y;
+       arma::mat u = Z.cols(pred_ranking);
+       
+       // sequential F test for variable selection
        for (size_t j = 0; j < d; j++) {
-         // Set sigma2 to sigma2 ols 
+         // set sigma2 to sigma2 ols 
          sigma2 = sel_sigma2;
          
-         // Instead of sorting, find index with max SD
+         // instead of sorting, find index with max SD
          auto max_it = std::max_element(sd_r.begin(), sd_r.end());
          int max_idx = std::distance(sd_r.begin(), max_it);
-         // Set the maximum element to -1
          sd_r[max_idx] = -1;
          
+         // add 1 new variable based on predictor ranking
          arma::uword j_idx;
          if (sis == true and iter == 0) {
            j_idx = r_XY[j];
@@ -172,7 +185,10 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
          }
          new_b.push_back(static_cast<int>(j_idx));
          sel_idx = arma::join_vert(sel_idx, arma::uvec{j_idx});
-         double new_sigma2 = get_LSsigma2(y, Z.cols(sel_idx));
+         
+         // cout << arma::all(u.cols(linspace<uvec>(j, j, 1)) == Z.cols(arma::uvec{j_idx})) << endl;
+
+         double new_sigma2 = get_LSsigma2(y, u.cols(linspace<uvec>(0, j, j+1)));
          double F_stat = (sel_sigma2 - new_sigma2) / (new_sigma2 / (n-(j+1)));
          
          if (F_stat > F_crit_values[j]) {
@@ -184,7 +200,9 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
        }
        
        updateSupport(support_ss, sel_b);
+       // ----------------------------------------------- // 
        // ------------- End of Sigma update ------------- //
+       // ----------------------------------------------- // 
        
        if (iter > 0) {
          // Check if support supper set converges
