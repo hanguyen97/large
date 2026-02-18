@@ -135,14 +135,19 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
        }
        
        X_r -= X_X.col(j) * b[j];
-       if (F_test) {
-         arma::colvec pr = y - Z.cols(find(linspace<uvec>(0, p - 1, p) != j)) * b(find(linspace<uvec>(0, p - 1, p) != j));
-         sd_r[j] = sqrt(as_scalar(pr.t() * pr) / n);
-       }
+       // if (F_test) {
+       //   
+       // }
      }
      
      
      if (F_test) {
+       // ------------- Sigma update ------------- //
+       for (int j = 0; j < p; j++) {
+         arma::colvec pr = y - Z.cols(find(linspace<uvec>(0, p - 1, p) != j)) * b(find(linspace<uvec>(0, p - 1, p) != j));
+         sd_r[j] = sqrt(as_scalar(pr.t() * pr) / n);
+       }
+       
        arma::uvec sorted_sd_idx;
        if (sis == true and iter == 0) {
          sorted_sd_idx = r_XY;
@@ -184,6 +189,8 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
        }
        
        updateSupport(support_ss, sel_b);
+       // ------------- End of Sigma update ------------- //
+       
        if (iter > 0) {
          // Check if support supper set converges
          if (haveSameElements(support_ss, support_ss_old)) {
