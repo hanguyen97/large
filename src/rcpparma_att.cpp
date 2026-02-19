@@ -42,22 +42,6 @@ bool haveSameElements(std::vector<int> sel_b, std::vector<int> support_ss) {
   return std::multiset<int>(sel_b.begin(), sel_b.end()) == std::multiset<int>(support_ss.begin(), support_ss.end());
 }
 
-// // Function to compute LS estimator of sigma^2
-// double get_LSsigma2(const arma::colvec& y, const arma::mat& X) {
-//   int n = X.n_rows; 
-//   int p = X.n_cols; 
-//   
-//   arma::mat XtX_inv = arma::solve(X.t() * X, arma::eye(X.n_cols, X.n_cols));
-//   arma::mat H = X * XtX_inv * X.t();
-//   
-//   arma::mat I = eye(n, n);
-//   arma::mat M = I - H;
-//   
-//   double sigma2_hat = as_scalar(y.t() * M * y) / (n - p);
-//   
-//   return sigma2_hat;
-// }
-
 std::vector<arma::uvec> get_sorted_indices(const arma::mat& R) {
   std::vector<arma::uvec> sorted_indices_per_col;
   
@@ -135,9 +119,6 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
        }
        
        X_r -= X_X.col(j) * b[j];
-       // if (F_test) {
-       //   
-       // }
      }
      
      
@@ -157,13 +138,12 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
        } else {
          pred_ranking = arma::sort_index(sd_r, "descend");
        }
-       // cout << pred_ranking << endl;
 
        // initialize sigma update variables
-       std::vector<int> sel_b;
-       std::vector<int> new_b = sel_b;
-       sel_sigma2 = var(y);
-       arma::uvec sel_idx;
+       // std::vector<int> sel_b;
+       // std::vector<int> new_b = sel_b;
+       // sel_sigma2 = var(y);
+       // arma::uvec sel_idx;
        arma::colvec y_temp = y;
        arma::mat u = Z.cols(pred_ranking);
        
@@ -172,24 +152,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
          // set sigma2 to sigma2 ols 
          sigma2 = sel_sigma2;
          
-         // // instead of sorting, find index with max SD
-         // auto max_it = std::max_element(sd_r.begin(), sd_r.end());
-         // int max_idx = std::distance(sd_r.begin(), max_it);
-         // sd_r[max_idx] = -1;
-         // 
-         // // add 1 new variable based on predictor ranking
-         // arma::uword j_idx;
-         // if (sis == true and iter == 0) {
-         //   j_idx = r_XY[j];
-         // } else {
-         //   j_idx = max_idx;
-         // }
-         // new_b.push_back(static_cast<int>(j_idx));
-         // sel_idx = arma::join_vert(sel_idx, arma::uvec{j_idx});
-         
          // Gram-Schmidt process
-         // cout << arma::all(u.col(j) == Z.col(pred_ranking[j])) << endl;
-         
          arma::vec uj = Z.col(pred_ranking[j]); 
          if (j > 0) {
            for (arma::uword k = 0; k < j; ++k) {
@@ -207,24 +170,25 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
          if (den > 1e-12) {
            y_hat = (arma::dot(y_temp, uj) / den) * uj;
          }
-         double new_sigma2 = as_scalar(arma::dot(y_temp - y_hat, y_temp - y_hat)) / (y.n_elem - (j+1)) ;
+         // double new_sigma2 = as_scalar(arma::dot(y_temp - y_hat, y_temp - y_hat)) / (y.n_elem - (j+1)) ;
          
-         // double new_sigma2 = get_LSsigma2(y, Z.cols(sel_idx));
-         // cout << new_sigma2_check << endl;
-         // cout << new_sigma2 << endl;
-         
-         double F_stat = (sel_sigma2 - new_sigma2) / (new_sigma2 / (n-(j+1)));
+         // calculate F-statistics
+         double new_RSS = as_scalar(arma::dot(y_temp - y_hat, y_temp - y_hat));
+         double old_RSS = as_scalar(arma::dot(y_temp, y_temp));
+         double F_stat = (old_RSS - new_RSS) / (new_RSS / (n-(j+1)));
          
          if (F_stat > F_crit_values[j]) {
-           sel_b = new_b;
-           sel_sigma2 = new_sigma2;
+           // sel_b = new_b;
+           // sel_sigma2 = new_sigma2;
            y_temp = y_temp - y_hat;
          } else {
+           sel_sigma2 = as_scalar(arma::dot(y_temp, y_temp)) / (n-j);
            break;
          }
        }
        
        updateSupport(support_ss, sel_b);
+       
        // ----------------------------------------------- // 
        // ------------- End of Sigma update ------------- //
        // ----------------------------------------------- // 
