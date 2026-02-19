@@ -45,9 +45,9 @@ double avg_offd_abs(const arma::mat& W) {
 }
 
 //' Inner Loop using Autotune Lasso  
-// [[Rcpp::export]]
-List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::uvec& r_XY, 
-                    const arma::vec& lambdas, 
+ // [[Rcpp::export]]
+ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::uvec& r_XY, 
+                     const arma::vec& lambdas, 
                      double sigma2, int n, double s_22, 
                      const arma::colvec& y, const arma::mat& Z, 
                      int node, int outer_iter, 
@@ -117,7 +117,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
        } else {
          pred_ranking = arma::sort_index(sd_r, "descend");
        }
-
+       
        // initialize sigma update variables
        // std::vector<int> sel_b;
        // std::vector<int> new_b = sel_b;
@@ -150,17 +150,18 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
          if (den > 1e-12) {
            y_hat = (arma::dot(y_temp, uj) / den) * uj;
          }
-
+         
          // calculate F-statistics
+         double new_sigma2 = as_scalar(arma::dot(y_temp - y_hat, y_temp - y_hat)) / (y.n_elem - (j+1)) ;
          double new_RSS = as_scalar(arma::dot(y_temp - y_hat, y_temp - y_hat));
          double old_RSS = as_scalar(arma::dot(y_temp, y_temp));
          double F_stat = (old_RSS - new_RSS) / (new_RSS / (n-(j+1)));
          
          if (F_stat > F_crit_values[j]) {
            y_temp = y_temp - y_hat;
+           sel_sigma2 = new_sigma2;
            support_set.push_back(pred_ranking[j]);
          } else {
-           sel_sigma2 = as_scalar(arma::dot(y_temp, y_temp)) / (n-j);
            break;
          }
        }
@@ -178,10 +179,10 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
            //     std::cout << x << " ";
            //   }
            //   std::cout << std::endl; // New line after printing
-
+           
            F_test = false;
          }
-
+         
          // check if sigma2 converges
          if (abs(sel_sigma2 - sigma2_old) < 1e-6) {
            // cout << "sigma2 converges" << endl;
@@ -210,38 +211,38 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
 
 
 //' Locally Adaptive Regularization for Graph Estimation
-//' 
-//' Estimates a sparse inverse covariance matrix using a lasso (L1) penalty
-//' with locally adaptive regularization
-//' 
-//' @param X A numeric data matrix
-//' @param alpha Significance level of the F-test used to determine nodewise regularization. 
-//'   Default is 0.02.
-//' @param penalize_diag Logical; whether to penalize diagonal entries of the precision matrix. 
-//'   Default is \code{FALSE}.
-//' @param thr Convergence threshold. Default is 0.05.
-//' @param maxit Maximum number of iterations for the outer loop. Default is 20.
-//' @param verbose Logical; if \code{TRUE}, print overall iteration progress. Default is \code{TRUE}.
-//' 
-//' @return
-//' \itemize{
-//'   \item \code{Theta}: Estimated precision matrix.
-//'   \item \code{sigma2.hat}: Estimated residual variances from nodewise regressions.
-//'   \item \code{lambdas}: Vector of adaptively selected regularization parameters for each node.
-//'   \item \code{niter}: Number of outer iterations performed.
-//'   \item \code{converged}: Logical indicating whether the algorithm converged.
-//' }
-//' 
-// [[Rcpp::export]]
-List fit_large(const arma::mat& X, double alpha = 0.02, 
-                      double penalize_diag = false,
-                      double thr = 0.05, int maxit = 20, 
-                      bool verbose = true) {
+ //' 
+ //' Estimates a sparse inverse covariance matrix using a lasso (L1) penalty
+ //' with locally adaptive regularization
+ //' 
+ //' @param X A numeric data matrix
+ //' @param alpha Significance level of the F-test used to determine nodewise regularization. 
+ //'   Default is 0.02.
+ //' @param penalize_diag Logical; whether to penalize diagonal entries of the precision matrix. 
+ //'   Default is \code{FALSE}.
+ //' @param thr Convergence threshold. Default is 0.05.
+ //' @param maxit Maximum number of iterations for the outer loop. Default is 20.
+ //' @param verbose Logical; if \code{TRUE}, print overall iteration progress. Default is \code{TRUE}.
+ //' 
+ //' @return
+ //' \itemize{
+ //'   \item \code{Theta}: Estimated precision matrix.
+ //'   \item \code{sigma2.hat}: Estimated residual variances from nodewise regressions.
+ //'   \item \code{lambdas}: Vector of adaptively selected regularization parameters for each node.
+ //'   \item \code{niter}: Number of outer iterations performed.
+ //'   \item \code{converged}: Logical indicating whether the algorithm converged.
+ //' }
+ //' 
+ // [[Rcpp::export]]
+ List fit_large(const arma::mat& X, double alpha = 0.02, 
+                double penalize_diag = false,
+                double thr = 0.05, int maxit = 20, 
+                bool verbose = true) {
    
    int n = X.n_rows;
    int p = X.n_cols;
    bool verbose_i = false;
-     
+   
    Rcpp::Function qf("qf");
    // Prevent non-positive df2 of F-test
    int d = std::min(n-2, p-1);
@@ -337,7 +338,7 @@ List fit_large(const arma::mat& X, double alpha = 0.02,
      
      arma::mat W_diff = W - W_old;
      e = norm(W_diff, "fro") / norm(W_old, "fro");
-
+     
      if (final_cycle) { 
        if (iter < maxit-1) {
          niter = iter + 1;
