@@ -12,34 +12,13 @@ using namespace arma;
 //
 // [[Rcpp::depends(RcppArmadillo)]]
 
-// Function to update support_ss if necessary
-void updateSupport(std::vector<int>& support_ss, const std::vector<int>& sel_b) {
+bool is_subset(std::vector<int> a, std::vector<int> b) {
+  // sort both vectors
+  std::sort(a.begin(), a.end());
+  std::sort(b.begin(), b.end());
   
-  std::unordered_set<int> support_set(support_ss.begin(), support_ss.end());
-  bool all_found = true;
-  for (int num : sel_b) {
-    if (support_set.find(num) == support_set.end()) { // Element not found
-      all_found = false;
-      break;
-    }
-  }
-  
-  // If all elements are already present, return early
-  if (all_found) {
-    return;
-  }
-  
-  // Otherwise, add missing elements to support_ss
-  for (int num : sel_b) {
-    if (support_set.find(num) == support_set.end()) {
-      support_ss.push_back(num);
-      support_set.insert(num);
-    }
-  }
-}
-
-bool haveSameElements(std::vector<int> sel_b, std::vector<int> support_ss) {
-  return std::multiset<int>(sel_b.begin(), sel_b.end()) == std::multiset<int>(support_ss.begin(), support_ss.end());
+  // check if 'a' is a subset of 'b'
+  return std::includes(b.begin(), b.end(), a.begin(), a.end());
 }
 
 std::vector<arma::uvec> get_sorted_indices(const arma::mat& R) {
@@ -88,8 +67,8 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
    bool F_test = true;
    bool sis = true;
    double thresh = -1;
-   // std::vector<int> support_ss;
-   // std::vector<int> support_ss_old;
+   std::vector<int> support_set;
+   std::vector<int> support_set_old;
    // std::vector<int> sel_b;
    arma::vec lambdas_sub = arma::join_vert(lambdas.head(node), lambdas.tail(lambdas.n_elem-node-1));
    
@@ -146,6 +125,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
        // arma::uvec sel_idx;
        arma::colvec y_temp = y;
        arma::mat u = Z.cols(pred_ranking);
+       support_set = std::vector<int>{};
        
        // sequential F test for variable selection
        for (size_t j = 0; j < d; j++) {
@@ -170,47 +150,39 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
          if (den > 1e-12) {
            y_hat = (arma::dot(y_temp, uj) / den) * uj;
          }
-         // double new_sigma2 = as_scalar(arma::dot(y_temp - y_hat, y_temp - y_hat)) / (y.n_elem - (j+1)) ;
-         
+
          // calculate F-statistics
          double new_RSS = as_scalar(arma::dot(y_temp - y_hat, y_temp - y_hat));
          double old_RSS = as_scalar(arma::dot(y_temp, y_temp));
          double F_stat = (old_RSS - new_RSS) / (new_RSS / (n-(j+1)));
          
          if (F_stat > F_crit_values[j]) {
-           // sel_b = new_b;
-           // sel_sigma2 = new_sigma2;
            y_temp = y_temp - y_hat;
+           support_set.push_back(pred_ranking[j]);
          } else {
            sel_sigma2 = as_scalar(arma::dot(y_temp, y_temp)) / (n-j);
            break;
          }
        }
        
-       // updateSupport(support_ss, sel_b);
-       
        // ----------------------------------------------- // 
        // ------------- End of Sigma update ------------- //
        // ----------------------------------------------- // 
        
        if (iter > 0) {
-         // // check if support supper set converges
-         // if (haveSameElements(support_ss, support_ss_old)) {
-         //   for (int x : support_ss) {
-         //     std::cout << x << " ";
-         //   }
-         //   std::cout << std::endl; // New line after printing
-         //   
-         //   for (int x : support_ss_old) {
-         //     std::cout << x << " ";
-         //   }
-         //   std::cout << std::endl; // New line after printing
-         //   
-         //   cout << "support supper set converges" << endl;
-         //   // F_test = false;
-         // } 
          
-         // check if support supper set converges
+         // // check if support supper set converges
+         if (is_subset(support_set, support_set_old)) {
+           // cout << "support set converges" << endl;
+           //   for (int x : support_set) {
+           //     std::cout << x << " ";
+           //   }
+           //   std::cout << std::endl; // New line after printing
+
+           F_test = false;
+         }
+
+         // check if sigma2 converges
          if (abs(sel_sigma2 - sigma2_old) < 1e-6) {
            // cout << "sigma2 converges" << endl;
            F_test = false;
@@ -221,7 +193,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
      b_old = b;
      X_r_old = X_r;
      sigma2_old = sel_sigma2;
-     // support_ss_old = support_ss;
+     support_set_old = support_set;
      double e = mean(square(X_r_old));
      
      if (abs(e - e_old) > 0.0001) {
