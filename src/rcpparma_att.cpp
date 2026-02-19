@@ -88,9 +88,9 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
    bool F_test = true;
    bool sis = true;
    double thresh = -1;
-   std::vector<int> support_ss;
-   std::vector<int> support_ss_old;
-   std::vector<int> sel_b;
+   // std::vector<int> support_ss;
+   // std::vector<int> support_ss_old;
+   // std::vector<int> sel_b;
    arma::vec lambdas_sub = arma::join_vert(lambdas.head(node), lambdas.tail(lambdas.n_elem-node-1));
    
    if (lambda0 == -1) {
@@ -187,20 +187,32 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
          }
        }
        
-       updateSupport(support_ss, sel_b);
+       // updateSupport(support_ss, sel_b);
        
        // ----------------------------------------------- // 
        // ------------- End of Sigma update ------------- //
        // ----------------------------------------------- // 
        
        if (iter > 0) {
-         // Check if support supper set converges
-         if (haveSameElements(support_ss, support_ss_old)) {
-           F_test = false;
-         } 
+         // // check if support supper set converges
+         // if (haveSameElements(support_ss, support_ss_old)) {
+         //   for (int x : support_ss) {
+         //     std::cout << x << " ";
+         //   }
+         //   std::cout << std::endl; // New line after printing
+         //   
+         //   for (int x : support_ss_old) {
+         //     std::cout << x << " ";
+         //   }
+         //   std::cout << std::endl; // New line after printing
+         //   
+         //   cout << "support supper set converges" << endl;
+         //   // F_test = false;
+         // } 
          
-         // Check if support supper set converges
-         if (abs(sel_sigma2 - sigma2_old) < 0.0001) {
+         // check if support supper set converges
+         if (abs(sel_sigma2 - sigma2_old) < 1e-6) {
+           // cout << "sigma2 converges" << endl;
            F_test = false;
          }
        }
@@ -209,7 +221,7 @@ List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::u
      b_old = b;
      X_r_old = X_r;
      sigma2_old = sel_sigma2;
-     support_ss_old = support_ss;
+     // support_ss_old = support_ss;
      double e = mean(square(X_r_old));
      
      if (abs(e - e_old) > 0.0001) {
