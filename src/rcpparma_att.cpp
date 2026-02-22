@@ -278,7 +278,7 @@ double avg_offd_abs(const arma::mat& W) {
        arma::uvec idx = regspace<uvec>(0, p - 1);
        idx.shed_row(j);
        arma::colvec s_12 = S.submat(idx, uvec{(unsigned int)j});
-       lambdas(j) = 0.5 * max(abs(s_12)) ;
+       lambdas(j) = 0.5 * max(abs(s_12));
      }
    }
    
@@ -313,7 +313,12 @@ double avg_offd_abs(const arma::mat& W) {
        lambdas(j) = thresh;
        
        arma::vec lambdas_sub = arma::join_vert(lambdas.head(j), lambdas.tail(lambdas.n_elem-j-1));
-       arma::mat Wsub = (W_11 + arma::diagmat(lambdas_sub)) * b_hat;
+       arma::mat Wsub;
+       if (penalize_diag) {
+         Wsub = (W_11 + arma::diagmat(lambdas_sub)) * b_hat;
+       } else {
+         Wsub = W_11 * b_hat;
+       }
        W.submat(idx, uvec{(unsigned int)j}) = Wsub;
        W.submat(uvec{(unsigned int)j}, idx) = trans(Wsub);
        
