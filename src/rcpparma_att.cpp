@@ -324,7 +324,8 @@ double avg_offd_abs(const arma::mat& W) {
        
        if (final_cycle) {
          if (penalize_diag) {
-           Theta(j, j) = 1.0 / (sigma2_hat(j)+lambdas(j));
+           Theta(j, j) = 1.0 / sigma2_hat(j);
+           // Theta(j, j) = 1.0 / (sigma2_hat(j)+lambdas(j));
          } else {
            Theta(j, j) = 1.0 / sigma2_hat(j);
          }
