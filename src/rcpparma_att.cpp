@@ -235,7 +235,8 @@ double avg_offd_abs(const arma::mat& W) {
  //' 
  // [[Rcpp::export]]
  List fit_large(const arma::mat& X, double alpha = 0.02, 
-                double penalize_diag = false,
+                bool penalize_diag = false,
+                bool penalize_test = false,
                 double thr = 0.05, int maxit = 20, 
                 bool verbose = true) {
    
@@ -271,8 +272,6 @@ double avg_offd_abs(const arma::mat& W) {
    lambda0s.fill(-1);
    arma::vec b_hat(p-1, fill::zeros);
    
-   arma::mat W_old = W;
-   
    if (penalize_diag) {
      for (int j = 0; j < p; j++) {
        arma::uvec idx = regspace<uvec>(0, p - 1);
@@ -281,6 +280,18 @@ double avg_offd_abs(const arma::mat& W) {
        lambdas(j) = 0.5 * max(abs(s_12));
      }
    }
+   
+   if (penalize_test) {
+     for (int j = 0; j < p; j++) {
+       arma::uvec idx = regspace<uvec>(0, p - 1);
+       idx.shed_row(j);
+       arma::colvec s_12 = S.submat(idx, uvec{(unsigned int)j});
+       lambdas(j) = 0.5 * max(abs(s_12));
+     }
+     W.diag() += lambdas;
+   }
+   
+   arma::mat W_old = W;
    
    // Sort indices of cor matrix
    std::vector<arma::uvec> R_sorted_idx = get_sorted_indices(R);

@@ -9,7 +9,7 @@ lasso_autotune <- function(X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node,
     .Call(`_large_lasso_autotune`, X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0, verbose_i, penalize_diag)
 }
 
-fit_large <- function(X, alpha = 0.02, penalize_diag = FALSE, thr = 0.05, maxit = 20L, verbose = TRUE) {
-    .Call(`_large_fit_large`, X, alpha, penalize_diag, thr, maxit, verbose)
+fit_large <- function(X, alpha = 0.02, penalize_diag = FALSE, penalize_test = FALSE, thr = 0.05, maxit = 20L, verbose = TRUE) {
+    .Call(`_large_fit_large`, X, alpha, penalize_diag, penalize_test, thr, maxit, verbose)
 }
 
