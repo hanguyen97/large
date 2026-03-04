@@ -240,6 +240,9 @@ double avg_offd_abs(const arma::mat& W) {
                 double thr = 0.05, int maxit = 20, 
                 bool verbose = true) {
    
+   std::vector<double> runtimes;
+   auto start = std::chrono::high_resolution_clock::now();
+   
    int n = X.n_rows;
    int p = X.n_cols;
    bool verbose_i = false;
@@ -356,10 +359,14 @@ double avg_offd_abs(const arma::mat& W) {
      arma::mat W_diff = W - W_old;
      e = norm(W_diff, "fro") / norm(W_old, "fro");
      
+     
      if (final_cycle) { 
        if (iter < maxit-1) {
          niter = iter + 1;
        }
+       auto end = std::chrono::high_resolution_clock::now();
+       std::chrono::duration<double> elapsed = end - start;
+       runtimes.push_back(elapsed.count());
        break;
      }
      
@@ -372,6 +379,11 @@ double avg_offd_abs(const arma::mat& W) {
      if (iter == maxit-2) {
        final_cycle = true;
      }
+     
+     auto end = std::chrono::high_resolution_clock::now();
+     std::chrono::duration<double> elapsed = end - start;
+     start = end;
+     runtimes.push_back(elapsed.count());
    }
    
    bool converged = (niter != -1);
@@ -387,5 +399,6 @@ double avg_offd_abs(const arma::mat& W) {
                        Named("sigma2.hat") = sigma2_hat,
                        Named("lambdas") = lambdas,
                        Named("niter") = niter,
-                       Named("converged") = converged);
+                       Named("converged") = converged,
+                       Named("runtimes") = runtimes);
  }
