@@ -285,14 +285,13 @@ double avg_offd_abs(const arma::mat& W) {
    }
    
    if (penalize_test) {
-     // for (int j = 0; j < p; j++) {
-     //   arma::uvec idx = regspace<uvec>(0, p - 1);
-     //   idx.shed_row(j);
-     //   arma::colvec s_12 = S.submat(idx, uvec{(unsigned int)j});
-     //   lambdas(j) = 0.5 * max(abs(s_12));
-     // }
-     // W.diag() += lambdas;
-     W.diag() += mean(S.diag());
+     for (int j = 0; j < p; j++) {
+       arma::uvec idx = regspace<uvec>(0, p - 1);
+       idx.shed_row(j);
+       arma::colvec s_12 = S.submat(idx, uvec{(unsigned int)j});
+       lambdas(j) = 0.5 * mean(abs(s_12));
+     }
+     W.diag() += lambdas;
    }
    
    arma::mat W_old = W;
