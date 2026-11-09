@@ -53,7 +53,7 @@ double avg_offd_abs(const arma::mat& W) {
                      int node, int outer_iter, 
                      double alpha, const arma::vec& F_crit_values, 
                      double lambda0 = -1, 
-                     bool verbose_i = false,
+                     bool verbose_i = true,
                      bool penalize_diag = false) {
    
    int p = X_X.n_rows;
@@ -76,6 +76,7 @@ double avg_offd_abs(const arma::mat& W) {
      lambda0 = 0.5 * max(abs(X_Y)) * (1 / s_22);
    }
    
+   arma::vec b_hist2 = b_old;   // beta from two inner iterations ago
    for (int iter = 0; iter <= 1000; iter++) {
      
      b = b_old;
@@ -102,6 +103,7 @@ double avg_offd_abs(const arma::mat& W) {
      
      
      if (F_test) {
+       sel_sigma2 = arma::dot(y, y) / (y.n_elem - 0); 
        // ---------------------------------------- // 
        // ------------- Sigma update ------------- //
        // ---------------------------------------- // 
@@ -137,11 +139,8 @@ double avg_offd_abs(const arma::mat& W) {
          if (j > 0) {
            for (arma::uword k = 0; k < j; ++k) {
              arma::vec uk = u.col(k);
-             double num = arma::dot(uj, uk);        
-             double den = arma::dot(uk, uk);      
-             if (den > 1e-12) {
-               uj = u.col(j) - (num / den) * uk;
-             }
+             double den_k = arma::dot(uk, uk); // accumulation G-S
+             if (den_k > 1e-12) uj -= (arma::dot(uj, uk) / den_k) * uk;
            }
          }
          u.col(j) = uj;
@@ -190,6 +189,15 @@ double avg_offd_abs(const arma::mat& W) {
          }
        }
      }
+     
+     double db1 = arma::norm(b - b_old, 2)   / std::max(arma::norm(b_old, 2),   1e-12);
+     double db2 = arma::norm(b - b_hist2, 2) / std::max(arma::norm(b_hist2, 2), 1e-12);
+     if (verbose_i && iter < 50) {
+       Rcout << "    [node " << node + 1 << ", outer " << outer_iter + 1 << "] inner iter = " << iter + 1
+             << "; relative beta change = " << db1 << "; vs 2 back = " << db2
+             << "; |S| = " << support_set.size() << "; sigma2 = " << sel_sigma2 << std::endl;
+     }
+     b_hist2 = b_old;
      
      b_old = b;
      X_r_old = X_r;
@@ -245,7 +253,7 @@ double avg_offd_abs(const arma::mat& W) {
    
    int n = X.n_rows;
    int p = X.n_cols;
-   bool verbose_i = false;
+   bool verbose_i = true;
    
    Rcpp::Function qf("qf");
    // Prevent non-positive df2 of F-test
