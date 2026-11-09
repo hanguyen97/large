@@ -53,7 +53,7 @@ double avg_offd_abs(const arma::mat& W) {
                      int node, int outer_iter, 
                      double alpha, const arma::vec& F_crit_values, 
                      double lambda0 = -1, 
-                     bool verbose_i = true,
+                     bool verbose_i = false,
                      bool penalize_diag = false) {
    
    int p = X_X.n_rows;
@@ -253,7 +253,7 @@ double avg_offd_abs(const arma::mat& W) {
    
    int n = X.n_rows;
    int p = X.n_cols;
-   bool verbose_i = true;
+   bool verbose_i = false;
    
    Rcpp::Function qf("qf");
    // Prevent non-positive df2 of F-test
