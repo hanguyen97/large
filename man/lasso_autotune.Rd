@@ -20,7 +20,8 @@ lasso_autotune(
   F_crit_values,
   lambda0 = -1,
   verbose_i = FALSE,
-  penalize_diag = FALSE
+  penalize_diag = FALSE,
+  update_sigma = TRUE
 )
 }
 \description{

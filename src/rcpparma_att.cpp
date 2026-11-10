@@ -54,7 +54,8 @@ double avg_offd_abs(const arma::mat& W) {
                      double alpha, const arma::vec& F_crit_values, 
                      double lambda0 = -1, 
                      bool verbose_i = false,
-                     bool penalize_diag = false) {
+                     bool penalize_diag = false,
+                     bool update_sigma = true) {   // [AUTO-FREEZE] false = skip F-test, keep sigma2 fixed
    
    int p = X_X.n_rows;
    int d = std::min(n-2, p);
@@ -64,7 +65,7 @@ double avg_offd_abs(const arma::mat& W) {
    double e_old = 1e6;
    double sel_sigma2 = var(y);
    double sigma2_old = 1e6;
-   bool F_test = true;
+   bool F_test = update_sigma;   // [AUTO-FREEZE] was: true
    bool sis = true;
    double thresh = -1;
    std::vector<int> support_set;
@@ -231,6 +232,9 @@ double avg_offd_abs(const arma::mat& W) {
  //' @param thr Convergence threshold. Default is 0.05.
  //' @param maxit Maximum number of iterations for the outer loop. Default is 20.
  //' @param verbose Logical; if \code{TRUE}, print overall iteration progress. Default is \code{TRUE}.
+ //' @param auto_freeze Logical; if \code{TRUE}, detect a 2-cycle in the outer loop 
+ //'   (change vs. two iterations back < 0.2 * change vs. previous iteration) and from then on 
+ //'   freeze each node's variance at the smaller of its last two values. Default is \code{TRUE}.
  //' 
  //' @return
  //' \itemize{
@@ -239,6 +243,7 @@ double avg_offd_abs(const arma::mat& W) {
  //'   \item \code{lambdas}: Vector of adaptively selected regularization parameters for each node.
  //'   \item \code{niter}: Number of outer iterations performed.
  //'   \item \code{converged}: Logical indicating whether the algorithm converged.
+ //'   \item \code{frozen_at}: Outer iteration from which the variances were frozen (NA if never).
  //' }
  //' 
  // [[Rcpp::export]]
@@ -246,7 +251,8 @@ double avg_offd_abs(const arma::mat& W) {
                 bool penalize_diag = false,
                 bool penalize_test = false,
                 double thr = 0.05, int maxit = 20, 
-                bool verbose = true) {
+                bool verbose = true,
+                bool auto_freeze = true) {   // [AUTO-FREEZE]
    
    std::vector<double> runtimes;
    auto start = std::chrono::high_resolution_clock::now();
@@ -283,6 +289,12 @@ double avg_offd_abs(const arma::mat& W) {
    lambda0s.fill(-1);
    arma::vec b_hat(p-1, fill::zeros);
    
+   // [AUTO-FREEZE] freezing state
+   bool frozen = false;
+   bool freeze_pending = false;
+   int frozen_at = NA_INTEGER;
+   arma::vec sigma2_prev = sigma2_hat;   // sigma2 from the iteration before the most recent one
+   
    if (penalize_diag) {
      for (int j = 0; j < p; j++) {
        arma::uvec idx = regspace<uvec>(0, p - 1);
@@ -303,11 +315,26 @@ double avg_offd_abs(const arma::mat& W) {
    }
    
    arma::mat W_old = W;
+   arma::mat W_old2;                  // [AUTO-FREEZE] W two iterations back
+   if (auto_freeze) W_old2 = W;
    
    // Sort indices of cor matrix
    std::vector<arma::uvec> R_sorted_idx = get_sorted_indices(R);
    
    for (int iter = 0; iter < maxit; iter++) {
+     
+     // [AUTO-FREEZE] apply a pending freeze: per node, keep the smaller sigma2 of the last two iterations
+     if (freeze_pending && !frozen) {
+       sigma2_hat = arma::min(sigma2_hat, sigma2_prev);
+       lambdas = lambda0s % sigma2_hat;
+       frozen = true;
+       frozen_at = iter + 1;
+       if (verbose) {
+         Rcout << "  sigma2 frozen from iter " << iter + 1 << " (smaller of last two iterations)" << std::endl;
+       }
+     }
+     sigma2_prev = sigma2_hat;
+     
      if (verbose) {
        Rcout << "iter = " << iter+1 << "; relative F-norm change = " << round(e_old * 1000) / 1000 << std::endl;
      }
@@ -326,7 +353,8 @@ double avg_offd_abs(const arma::mat& W) {
                                     X.col(j), X.cols(idx), 
                                     j, iter, alpha, F_crit_values,
                                     lambda0s(j), 
-                                    verbose_i, penalize_diag);
+                                    verbose_i, penalize_diag,
+                                    !frozen);   // [AUTO-FREEZE]
        
        b_hat = as<arma::vec>(fitted["b"]);
        sigma2_hat(j) = fitted["sigma2"];
@@ -381,6 +409,19 @@ double avg_offd_abs(const arma::mat& W) {
      if (e < thr) {
        final_cycle = true;
      } else {
+       // [AUTO-FREEZE] 2-cycle check: W is much closer to two iterations back than to the last one
+       if (auto_freeze && !frozen && !freeze_pending && iter >= 2) {
+         double e2 = norm(W - W_old2, "fro") / norm(W_old2, "fro");
+         if (e2 < 0.2 * e) {
+           freeze_pending = true;
+           if (verbose) {
+             Rcout << "  2-cycle detected at iter " << iter + 1
+                   << " (change vs. 2 back / change vs. 1 back = " << e2 / e << ")" << std::endl;
+           }
+         }
+       }
+       if (auto_freeze) W_old2 = W_old;   // [AUTO-FREEZE]
+       
        W_old = W;
        e_old = e;
      }
@@ -408,5 +449,6 @@ double avg_offd_abs(const arma::mat& W) {
                        Named("lambdas") = lambdas,
                        Named("niter") = niter,
                        Named("converged") = converged,
+                       Named("frozen_at") = frozen_at,   // [AUTO-FREEZE]
                        Named("runtimes") = runtimes);
  }
