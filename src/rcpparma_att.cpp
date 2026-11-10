@@ -92,8 +92,8 @@ std::vector<arma::uvec> get_sorted_indices(const arma::mat& R) {
          arma::colvec r_full = y - Z * b;
          arma::vec sd_r(p);
          for (int j = 0; j < p; j++) {
-           arma::colvec pr = r_full + Z.col(j) * b(j);
-           sd_r[j] = std::sqrt(arma::dot(pr, pr) / n);
+           arma::colvec pr = y - Z.cols(find(linspace<uvec>(0, p - 1, p) != j)) * b(find(linspace<uvec>(0, p - 1, p) != j));
+           sd_r[j] = sqrt(as_scalar(pr.t() * pr) / n);
          }
          pred_ranking = arma::sort_index(sd_r, "descend");
        }
@@ -284,12 +284,12 @@ std::vector<arma::uvec> get_sorted_indices(const arma::mat& R) {
      
      // apply a pending freeze: average sigma2 over the last two sweeps (phase-independent)
      if (freeze_pending && !frozen) {
-       sigma2_hat = 0.5 * (sigma2_hat + sigma2_prev);
+       sigma2_hat = arma::min(sigma2_hat, sigma2_prev);
        lambdas = lambda0s % sigma2_hat;
        frozen = true;
        frozen_at = iter + 1;
        if (verbose) {
-         Rcout << "  sigma2 frozen from sweep " << iter + 1 << " (average of last two sweeps)" << std::endl;
+         Rcout << "  sigma2 frozen from sweep " << iter + 1 << " (smaller of last two sweeps)" << std::endl;
        }
      }
      sigma2_prev = sigma2_hat;
