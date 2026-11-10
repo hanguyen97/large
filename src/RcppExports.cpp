@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // lasso_autotune
-List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::uvec& r_XY, const arma::vec& lambdas, double sigma2, int n, double s_22, const arma::colvec& y, const arma::mat& Z, int node, int outer_iter, double alpha, const arma::vec& F_crit_values, double lambda0, bool verbose_i, bool penalize_diag, bool update_sigma);
-RcppExport SEXP _large_lasso_autotune(SEXP X_XSEXP, SEXP X_YSEXP, SEXP r_XYSEXP, SEXP lambdasSEXP, SEXP sigma2SEXP, SEXP nSEXP, SEXP s_22SEXP, SEXP ySEXP, SEXP ZSEXP, SEXP nodeSEXP, SEXP outer_iterSEXP, SEXP alphaSEXP, SEXP F_crit_valuesSEXP, SEXP lambda0SEXP, SEXP verbose_iSEXP, SEXP penalize_diagSEXP, SEXP update_sigmaSEXP) {
+List lasso_autotune(const arma::mat& X_X, const arma::colvec& X_Y, const arma::uvec& r_XY, const arma::vec& lambdas, double sigma2, int n, double s_22, const arma::colvec& y, const arma::mat& Z, int node, double alpha, const arma::vec& F_crit_values, double lambda0, bool penalize_diag, bool update_sigma, double inner_tol);
+RcppExport SEXP _large_lasso_autotune(SEXP X_XSEXP, SEXP X_YSEXP, SEXP r_XYSEXP, SEXP lambdasSEXP, SEXP sigma2SEXP, SEXP nSEXP, SEXP s_22SEXP, SEXP ySEXP, SEXP ZSEXP, SEXP nodeSEXP, SEXP alphaSEXP, SEXP F_crit_valuesSEXP, SEXP lambda0SEXP, SEXP penalize_diagSEXP, SEXP update_sigmaSEXP, SEXP inner_tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -27,20 +27,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::colvec& >::type y(ySEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type Z(ZSEXP);
     Rcpp::traits::input_parameter< int >::type node(nodeSEXP);
-    Rcpp::traits::input_parameter< int >::type outer_iter(outer_iterSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type F_crit_values(F_crit_valuesSEXP);
     Rcpp::traits::input_parameter< double >::type lambda0(lambda0SEXP);
-    Rcpp::traits::input_parameter< bool >::type verbose_i(verbose_iSEXP);
     Rcpp::traits::input_parameter< bool >::type penalize_diag(penalize_diagSEXP);
     Rcpp::traits::input_parameter< bool >::type update_sigma(update_sigmaSEXP);
-    rcpp_result_gen = Rcpp::wrap(lasso_autotune(X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0, verbose_i, penalize_diag, update_sigma));
+    Rcpp::traits::input_parameter< double >::type inner_tol(inner_tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(lasso_autotune(X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node, alpha, F_crit_values, lambda0, penalize_diag, update_sigma, inner_tol));
     return rcpp_result_gen;
 END_RCPP
 }
 // fit_large
-List fit_large(const arma::mat& X, double alpha, bool penalize_diag, bool penalize_test, double thr, int maxit, bool verbose, bool auto_freeze);
-RcppExport SEXP _large_fit_large(SEXP XSEXP, SEXP alphaSEXP, SEXP penalize_diagSEXP, SEXP penalize_testSEXP, SEXP thrSEXP, SEXP maxitSEXP, SEXP verboseSEXP, SEXP auto_freezeSEXP) {
+List fit_large(const arma::mat& X, double alpha, bool penalize_diag, bool penalize_test, double thr, int maxit, bool verbose, int freeze_after, bool auto_freeze, double inner_tol);
+RcppExport SEXP _large_fit_large(SEXP XSEXP, SEXP alphaSEXP, SEXP penalize_diagSEXP, SEXP penalize_testSEXP, SEXP thrSEXP, SEXP maxitSEXP, SEXP verboseSEXP, SEXP freeze_afterSEXP, SEXP auto_freezeSEXP, SEXP inner_tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -51,15 +50,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type thr(thrSEXP);
     Rcpp::traits::input_parameter< int >::type maxit(maxitSEXP);
     Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    Rcpp::traits::input_parameter< int >::type freeze_after(freeze_afterSEXP);
     Rcpp::traits::input_parameter< bool >::type auto_freeze(auto_freezeSEXP);
-    rcpp_result_gen = Rcpp::wrap(fit_large(X, alpha, penalize_diag, penalize_test, thr, maxit, verbose, auto_freeze));
+    Rcpp::traits::input_parameter< double >::type inner_tol(inner_tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(fit_large(X, alpha, penalize_diag, penalize_test, thr, maxit, verbose, freeze_after, auto_freeze, inner_tol));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_large_lasso_autotune", (DL_FUNC) &_large_lasso_autotune, 17},
-    {"_large_fit_large", (DL_FUNC) &_large_fit_large, 8},
+    {"_large_lasso_autotune", (DL_FUNC) &_large_lasso_autotune, 16},
+    {"_large_fit_large", (DL_FUNC) &_large_fit_large, 10},
     {NULL, NULL, 0}
 };
 

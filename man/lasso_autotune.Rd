@@ -15,13 +15,12 @@ lasso_autotune(
   y,
   Z,
   node,
-  outer_iter,
   alpha,
   F_crit_values,
   lambda0 = -1,
-  verbose_i = FALSE,
   penalize_diag = FALSE,
-  update_sigma = TRUE
+  update_sigma = TRUE,
+  inner_tol = -1
 )
 }
 \description{

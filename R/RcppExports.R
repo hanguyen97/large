@@ -4,12 +4,12 @@
 #' Locally Adaptive Regularization for Graph Estimation
 NULL
 
-#' Inner Loop using Autotune Lasso  
-lasso_autotune <- function(X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0 = -1, verbose_i = FALSE, penalize_diag = FALSE, update_sigma = TRUE) {
-    .Call(`_large_lasso_autotune`, X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node, outer_iter, alpha, F_crit_values, lambda0, verbose_i, penalize_diag, update_sigma)
+#' Inner Loop using Autotune Lasso
+lasso_autotune <- function(X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node, alpha, F_crit_values, lambda0 = -1, penalize_diag = FALSE, update_sigma = TRUE, inner_tol = -1) {
+    .Call(`_large_lasso_autotune`, X_X, X_Y, r_XY, lambdas, sigma2, n, s_22, y, Z, node, alpha, F_crit_values, lambda0, penalize_diag, update_sigma, inner_tol)
 }
 
-fit_large <- function(X, alpha = 0.02, penalize_diag = FALSE, penalize_test = FALSE, thr = 0.05, maxit = 20L, verbose = TRUE, auto_freeze = TRUE) {
-    .Call(`_large_fit_large`, X, alpha, penalize_diag, penalize_test, thr, maxit, verbose, auto_freeze)
+fit_large <- function(X, alpha = 0.02, penalize_diag = FALSE, penalize_test = FALSE, thr = 0.05, maxit = 20L, verbose = TRUE, freeze_after = -1L, auto_freeze = FALSE, inner_tol = -1) {
+    .Call(`_large_fit_large`, X, alpha, penalize_diag, penalize_test, thr, maxit, verbose, freeze_after, auto_freeze, inner_tol)
 }
 
