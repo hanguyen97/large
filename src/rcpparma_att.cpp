@@ -211,7 +211,7 @@ std::vector<arma::uvec> get_sorted_indices(const arma::mat& R) {
                 double thr = 0.05, int maxit = 20,
                 bool verbose = true,
                 int freeze_after = -1,
-                bool auto_freeze = false,
+                bool auto_freeze = true,
                 double inner_tol = -1) {
    
    std::vector<double> runtimes;
