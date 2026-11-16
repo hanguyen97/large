@@ -64,6 +64,7 @@ std::vector<arma::uvec> get_sorted_indices(const arma::mat& R) {
      vec X_r = X_r_old;
      
      // ------------- Coordinate descent sweep ------------- //
+     arma::vec sd_r = arma::zeros<arma::vec>(p);
      thresh = lambda0 * sigma2;
      for (int j = 0; j < p; j++) {
        X_r += X_X.col(j) * b[j];
@@ -77,6 +78,13 @@ std::vector<arma::uvec> get_sorted_indices(const arma::mat& R) {
        }
        
        X_r -= X_X.col(j) * b[j];
+       
+       // SD of partial residual, computed right after b[j] is updated
+       // (uses the partially updated b: entries < j from this pass, entries > j from the previous pass)
+       if (F_test && iter > 0) {
+         arma::colvec pr = y - Z.cols(find(linspace<uvec>(0, p - 1, p) != j)) * b(find(linspace<uvec>(0, p - 1, p) != j));
+         sd_r[j] = sqrt(as_scalar(pr.t() * pr) / n);
+       }
      }
      
      // ------------- Sigma update (sequential F-test) ------------- //
@@ -88,13 +96,6 @@ std::vector<arma::uvec> get_sorted_indices(const arma::mat& R) {
        if (iter == 0) {
          pred_ranking = r_XY;
        } else {
-         // partial residual for j = full residual + Z_j * b_j  (avoids rebuilding Z without column j)
-         arma::colvec r_full = y - Z * b;
-         arma::vec sd_r(p);
-         for (int j = 0; j < p; j++) {
-           arma::colvec pr = y - Z.cols(find(linspace<uvec>(0, p - 1, p) != j)) * b(find(linspace<uvec>(0, p - 1, p) != j));
-           sd_r[j] = sqrt(as_scalar(pr.t() * pr) / n);
-         }
          pred_ranking = arma::sort_index(sd_r, "descend");
        }
        
@@ -182,7 +183,7 @@ std::vector<arma::uvec> get_sorted_indices(const arma::mat& R) {
  //' @param maxit Maximum number of iterations for the outer loop. Default is 20.
  //' @param verbose Logical; if \code{TRUE}, print overall iteration progress. Default is \code{TRUE}.
  //' @param freeze_after Freeze the nodewise variances (and hence the penalties) after this many
- //'   outer iterations (must be >= 2), at the average of the last two iterations.
+ //'   outer iterations (must be >= 2), at the per-node minimum of the last two iterations.
  //'   Default \code{-1} (never).
  //' @param auto_freeze Logical; freeze automatically when a 2-cycle is detected
  //'   (\code{e(t,t-2) < 0.2 * e(t,t-1)} while not converged). Default \code{FALSE}.
@@ -282,7 +283,7 @@ std::vector<arma::uvec> get_sorted_indices(const arma::mat& R) {
    
    for (int iter = 0; iter < maxit; iter++) {
      
-     // apply a pending freeze: average sigma2 over the last two sweeps (phase-independent)
+     // apply a pending freeze: per node, keep the smaller sigma2 of the last two sweeps
      if (freeze_pending && !frozen) {
        sigma2_hat = arma::min(sigma2_hat, sigma2_prev);
        lambdas = lambda0s % sigma2_hat;
